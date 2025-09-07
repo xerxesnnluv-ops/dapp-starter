@@ -1,64 +1,72 @@
 :root{
   --bg:#0b0f1a;
-  --panel:#0f172a;
-  --panel-2:#111827;
-  --border:#1f2937;
-  --text:#f3f4f6;
-  --muted:#9ca3af;
+  --surface:#0f172a;
+  --surface-2:#111827;
+  --line:#1f2937;
+  --text:#e5e7eb;
+  --muted:#94a3b8;
   --brand:#3b82f6;
   --brand-2:#22d3ee;
-  --ok:#10b981;
-  --warn:#f59e0b;
-  --err:#ef4444;
+  --success:#10b981;
+  --danger:#ef4444;
   --radius:14px;
-  --radius-sm:10px;
+  --r-sm:10px;
 }
 *{box-sizing:border-box}
 html,body,#root{height:100%}
 body{
-  margin:0;
-  background:var(--bg);
-  color:var(--text);
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, PingFang TC, "Microsoft JhengHei", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  margin:0;background:var(--bg);color:var(--text);
+  font-family: ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"PingFang TC","Microsoft JhengHei";
 }
 
-.container{max-width:960px;margin:0 auto;padding:24px 16px}
-.header{
-  position:sticky;top:0;z-index:10;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:12px 16px;border-bottom:1px solid var(--border);
-  background:linear-gradient(180deg, rgba(11,15,26,.95) 0%, rgba(11,15,26,.85) 100%);
-  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+/* Layout */
+.app-header{
+  position:sticky;top:0;z-index:40;
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 16px;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg, rgba(11,15,26,.95), rgba(11,15,26,.85));
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
 }
 .brand{display:flex;align-items:center;gap:10px}
 .logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--brand-2),#6366f1)}
 .title{font-weight:700}
-.badge{font-size:12px;color:var(--muted);border:1px solid var(--border);padding:4px 8px;border-radius:999px}
+.badge{font-size:12px;color:var(--muted);border:1px solid var(--line);padding:4px 8px;border-radius:999px;margin-left:8px}
 
+.container{max-width:980px;margin:0 auto;padding:24px 16px}
+
+/* Cards / Grid */
+.grid{display:grid;gap:16px}
+@media(min-width:860px){ .grid{grid-template-columns:1fr 1fr} }
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.card h2{margin:0 0 10px;font-size:18px}
+
+/* Buttons */
 .btn{
-  padding:10px 14px;border-radius:var(--radius-sm);
-  background:var(--panel-2);border:1px solid var(--border);color:var(--text);
-  cursor:pointer;transition:.15s transform, .15s opacity;
+  padding:10px 14px;border-radius:var(--r-sm);
+  background:var(--surface-2);border:1px solid var(--line);color:var(--text);
+  cursor:pointer;transition:transform .12s ease,opacity .12s ease;
 }
 .btn:hover{transform:translateY(-1px)}
 .btn.primary{background:var(--brand);border-color:transparent}
-.btn.ghost{background:transparent;border-color:var(--border)}
+.btn.ghost{background:transparent;border:1px solid var(--line)}
 .btn.small{padding:6px 10px;font-size:14px}
 
-.grid{display:grid;gap:16px}
-@media(min-width:860px){ .grid{grid-template-columns:1fr 1fr} }
-
-.card{
-  background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:16px;
-}
-.card h2{margin:0 0 10px 0;font-size:18px}
-.kv{font-size:14px;line-height:1.7}
-.kv .muted{color:var(--muted)}
-.row{display:flex;gap:8px;flex-wrap:wrap}
-
+/* Chips */
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .chip{
-  padding:8px 12px;background:var(--panel-2);border:1px solid var(--border);
+  padding:8px 12px;background:var(--surface-2);border:1px solid var(--line);
   border-radius:10px;cursor:pointer
 }
-.footer{margin:24px 0;color:var(--muted);font-size:12px;text-align:center}
+
+/* KVs */
+.kv{font-size:14px;line-height:1.7}
+.kv .muted{color:var(--muted)}
+.addr{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas}
+.footer{margin:28px 0;color:var(--muted);font-size:12px;text-align:center}
+
+/* Toolbar（右上連線） */
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.select{
+  background:var(--surface-2);border:1px solid var(--line);color:var(--text);
+  border-radius:10px;padding:8px 10px;
+}

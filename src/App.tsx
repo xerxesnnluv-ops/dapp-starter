@@ -14,13 +14,17 @@ const USDC: Record<number, `0x${string}`> = {
   10: '0x7F5c764cBc14f9669B88837ca1490cCa17c31607',
 }
 
+function short(addr?: `0x${string}` | string) {
+  if (!addr) return '-'
+  return `${addr.slice(0, 6)}…${addr.slice(-4)}`
+}
+
 export default function App() {
   const { connectors, connect, status, error } = useConnect()
   const { isConnected, address } = useAccount()
   const chainId = useChainId()
   const { disconnect } = useDisconnect()
   const { data: nativeBal } = useBalance({ address, chainId })
-
   const [usdc, setUsdc] = useState<string>('-')
   const currentUsdc = useMemo(() => USDC[chainId ?? 1], [chainId])
 
@@ -37,37 +41,63 @@ export default function App() {
     }
   }
 
+  async function switchTo(chain: (typeof supportedChains)[number]) {
+    const provider = (window as any).ethereum
+    if (!provider?.request) return alert('未偵測到以太坊提供者')
+    try {
+      await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: `0x${chain.id.toString(16)}` }] })
+    } catch (e: any) {
+      if (e?.code === 4902) {
+        await provider.request({
+          method: 'wallet_addEthereumChain',
+          params: [{ chainId: `0x${chain.id.toString(16)}`, chainName: chain.name, nativeCurrency: chain.nativeCurrency, rpcUrls: chain.rpcUrls.default.http }],
+        })
+      }
+    }
+  }
+
   return (
     <>
-      {/* 頂欄 */}
-      <header className="header">
+      {/* Header */}
+      <header className="app-header">
         <div className="brand">
           <div className="logo" />
-          <div className="title">悟淨 · DeFi DApp</div>
+          <div className="title">悟淨 · DeFi 控台</div>
           <span className="badge">Chain ID：{chainId ?? '-'}</span>
         </div>
 
-        <div className="row">
+        <div className="toolbar">
           {!isConnected ? (
-            connectors.map(c => (
-              <button key={c.uid} className="btn" onClick={() => connect({ connector: c })}>
-                連線：{c.name}
-              </button>
-            ))
+            <>
+              <select
+                className="select"
+                defaultValue=""
+                onChange={e => {
+                  const uid = e.target.value
+                  const ct = connectors.find(c => c.uid === uid)
+                  if (ct) connect({ connector: ct })
+                }}
+              >
+                <option value="" disabled>選擇連線方式</option>
+                {connectors.map(c => (
+                  <option key={c.uid} value={c.uid}>🔗 {c.name}</option>
+                ))}
+              </select>
+              <button className="btn primary">等待連線…</button>
+            </>
           ) : (
-            <button className="btn ghost" onClick={() => disconnect()}>
-              斷開連線
-            </button>
+            <>
+              <span className="badge addr">{short(address)}</span>
+              <button className="btn ghost" onClick={() => disconnect()}>斷開連線</button>
+            </>
           )}
         </div>
       </header>
 
-      {/* 內容 */}
+      {/* Main */}
       <main className="container">
-        <h1 style={{ fontSize: 28, margin: '6px 0 12px' }}>Bitget / Trust 相容 · 正式版介面</h1>
-        <p style={{ color: 'var(--muted)', marginTop: 0, marginBottom: 18 }}>
-          支援 Injected（錢包內建瀏覽器）與 WalletConnect v2。
-        </p>
+        <h1 style={{ margin: '6px 0 10px', fontSize: 28 }}>Bitget / Trust 相容 · 正式版介面</h1>
+        <p style={{ marginTop: 0, color: 'var(--muted)' }}>支援 Injected（錢包內建瀏覽器）與 WalletConnect v2。</p>
 
         <div className="grid">
           {/* 連線資訊 */}
@@ -75,20 +105,20 @@ export default function App() {
             <h2>連線狀態</h2>
             <div className="kv">
               <div>狀態：<span className="muted">{status}</span></div>
-              {error && <div style={{ color: 'var(--err)' }}>錯誤：{String(error.message ?? error)}</div>}
-              <div>地址：<span className="muted">{address ?? '-'}</span></div>
+              {error && <div style={{ color: 'var(--danger)' }}>錯誤：{String(error.message ?? error)}</div>}
+              <div>地址：<span className="addr muted">{short(address)}</span></div>
               <div>鏈 ID：<span className="muted">{chainId ?? '-'}</span></div>
             </div>
           </section>
 
-          {/* 餘額 */}
+          {/* 餘額卡 */}
           <section className="card">
             <h2>餘額</h2>
             <div className="kv">
               <div>原生幣：<span className="muted">{nativeBal ? `${nativeBal.formatted} ${nativeBal.symbol}` : '-'}</span></div>
               <div>USDC：<span className="muted">{usdc}</span></div>
             </div>
-            <div className="row" style={{ marginTop: 10 }}>
+            <div style={{ marginTop: 10 }}>
               <button className="btn primary small" onClick={fetchUsdc}>重新讀取 USDC</button>
             </div>
           </section>
@@ -99,31 +129,12 @@ export default function App() {
           <h2>切換鏈</h2>
           <div className="chips">
             {supportedChains.map(c => (
-              <button
-                key={c.id}
-                className="chip"
-                onClick={async () => {
-                  const provider = (window as any).ethereum
-                  if (!provider?.request) return alert('未偵測到以太坊提供者')
-                  try {
-                    await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: `0x${c.id.toString(16)}` }] })
-                  } catch (e: any) {
-                    if (e?.code === 4902) {
-                      await provider.request({
-                        method: 'wallet_addEthereumChain',
-                        params: [{ chainId: `0x${c.id.toString(16)}`, chainName: c.name, nativeCurrency: c.nativeCurrency, rpcUrls: c.rpcUrls.default.http }],
-                      })
-                    }
-                  }
-                }}
-              >
-                {c.name}
-              </button>
+              <button key={c.id} className="chip" onClick={() => switchTo(c)}>{c.name}</button>
             ))}
           </div>
         </section>
 
-        <div className="footer">© {new Date().getFullYear()} 悟淨 · DeFi DApp</div>
+        <div className="footer">© {new Date().getFullYear()} 悟淨 · DeFi 控台</div>
       </main>
     </>
   )
