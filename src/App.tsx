@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useAccount, useConnect, useDisconnect, useBalance, useChainId } from 'wagmi'
 import { readContract } from 'wagmi/actions'
 import { formatUnits } from 'viem'
@@ -6,12 +6,12 @@ import { erc20Abi } from './abi/erc20'
 import { wagmiConfig, supportedChains } from './web3'
 
 const USDC: Record<number, `0x${string}`> = {
-  1: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-  137: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
-  56: '0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d',
-  8453: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
-  42161: '0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8',
-  10: '0x7F5c764cBc14f9669B88837ca1490cCa17c31607',
+  1: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',   // Ethereum
+  137: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174', // Polygon
+  56: '0x8ac76a51cc950d9822d68b83fe1ad97b32cd580d',  // BNB Chain
+  8453: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',// Base
+  42161: '0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8',// Arbitrum
+  10: '0x7F5c764cBc14f9669B88837ca1490cCa17c31607',  // Optimism
 }
 
 export default function App() {
@@ -27,8 +27,17 @@ export default function App() {
     if (!address || !currentUsdc) return setUsdc('-')
     try {
       const [raw, decimals] = await Promise.all([
-        readContract(wagmiConfig, { address: currentUsdc, abi: erc20Abi, functionName: 'balanceOf', args: [address] }),
-        readContract(wagmiConfig, { address: currentUsdc, abi: erc20Abi, functionName: 'decimals' }),
+        readContract(wagmiConfig, {
+          address: currentUsdc,
+          abi: erc20Abi,
+          functionName: 'balanceOf',
+          args: [address],
+        }),
+        readContract(wagmiConfig, {
+          address: currentUsdc,
+          abi: erc20Abi,
+          functionName: 'decimals',
+        }),
       ])
       setUsdc(formatUnits(raw as bigint, Number(decimals)))
     } catch {
@@ -50,7 +59,13 @@ export default function App() {
                 <button
                   key={c.uid}
                   onClick={() => connect({ connector: c })}
-                  style={{ padding: '10px 14px', background: '#111827', border: '1px solid #374151', borderRadius: 10, cursor: 'pointer' }}
+                  style={{
+                    padding: '10px 14px',
+                    background: '#111827',
+                    border: '1px solid #374151',
+                    borderRadius: 10,
+                    cursor: 'pointer',
+                  }}
                 >
                   連線：{c.name}
                 </button>
@@ -59,7 +74,13 @@ export default function App() {
           ) : (
             <button
               onClick={() => disconnect()}
-              style={{ padding: '10px 14px', background: '#111827', border: '1px solid #374151', borderRadius: 10, cursor: 'pointer' }}
+              style={{
+                padding: '10px 14px',
+                background: '#111827',
+                border: '1px solid #374151',
+                borderRadius: 10,
+                cursor: 'pointer',
+              }}
             >
               斷開連線
             </button>
@@ -72,6 +93,7 @@ export default function App() {
         <p style={{ opacity: 0.85, marginBottom: 24 }}>支援 Injected（錢包內建瀏覽器）與 WalletConnect v2。</p>
 
         <section style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+          {/* 連線資訊 */}
           <div style={{ background: '#0f172a', border: '1px solid #1f2937', borderRadius: 14, padding: 18 }}>
             <h2 style={{ fontSize: 18, marginBottom: 10 }}>連線資訊</h2>
             <div style={{ fontSize: 14, opacity: 0.9 }}>
@@ -82,7 +104,7 @@ export default function App() {
             </div>
           </div>
 
-          {/* 這裡是剛剛手滑的地方，已修正 ↓ */}
+          {/* 餘額資訊 */}
           <div style={{ background: '#0f172a', border: '1px solid #1f2937', borderRadius: 14, padding: 18 }}>
             <h2 style={{ fontSize: 18, marginBottom: 10 }}>餘額</h2>
             <div style={{ fontSize: 14, opacity: 0.9 }}>
@@ -90,7 +112,14 @@ export default function App() {
               <div>USDC（當前鏈）：{usdc}</div>
               <button
                 onClick={fetchUsdc}
-                style={{ marginTop: 10, padding: '8px 12px', background: '#111827', border: '1px solid #374151', borderRadius: 8, cursor: 'pointer' }}
+                style={{
+                  marginTop: 10,
+                  padding: '8px 12px',
+                  background: '#111827',
+                  border: '1px solid #374151',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                }}
               >
                 重新讀取 USDC
               </button>
@@ -98,7 +127,16 @@ export default function App() {
           </div>
         </section>
 
-        <section style={{ marginTop: 24, background: '#0f172a', border: '1px solid #1f2937', borderRadius: 14, padding: 18 }}>
+        {/* 切換鏈 */}
+        <section
+          style={{
+            marginTop: 24,
+            background: '#0f172a',
+            border: '1px solid #1f2937',
+            borderRadius: 14,
+            padding: 18,
+          }}
+        >
           <h2 style={{ fontSize: 18, marginBottom: 10 }}>切換鏈</h2>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {supportedChains.map(c => (
@@ -128,7 +166,13 @@ export default function App() {
                     }
                   }
                 }}
-                style={{ padding: '8px 12px', background: '#111827', border: '1px solid #374151', borderRadius: 8, cursor: 'pointer' }}
+                style={{
+                  padding: '8px 12px',
+                  background: '#111827',
+                  border: '1px solid #374151',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                }}
               >
                 {c.name}
               </button>
