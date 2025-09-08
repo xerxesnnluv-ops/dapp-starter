@@ -5,7 +5,7 @@ import { formatUnits } from 'viem'
 import { erc20Abi } from './abi/erc20'
 import { wagmiConfig, supportedChains } from './web3'
 
-/** 換成你的正式連結 */
+// ★ 你的外部連結（可改成正式網址）
 const LINKS = {
   whitepaper: 'https://example.com/whitepaper.pdf',
   help: 'https://example.com/help',
@@ -32,7 +32,7 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const currentUsdc = useMemo(() => USDC[chainId ?? 1], [chainId])
 
-  // 區塊錨點
+  // ★ 錨點（允許 null）
   const homeRef = useRef<HTMLDivElement | null>(null)
   const rewardsRef = useRef<HTMLDivElement | null>(null)
   const historyRef = useRef<HTMLDivElement | null>(null)
@@ -50,6 +50,7 @@ export default function App() {
     }
   }
 
+  // ★ 全域樣式（Impermax 風格、乾淨專業）
   useEffect(() => {
     const s = document.createElement('style')
     s.textContent = `
@@ -60,8 +61,9 @@ export default function App() {
       }
       *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);
         font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans TC","PingFang TC",Arial}
+      a{color:inherit}
 
-      /* 頂部列 */
+      /* Topbar */
       .top{position:sticky;top:0;z-index:50;background:rgba(10,14,20,.7);
         backdrop-filter:saturate(160%) blur(10px);border-bottom:1px solid var(--line)}
       .topin{max-width:1080px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:12px 16px}
@@ -70,6 +72,7 @@ export default function App() {
       .right{display:flex;align-items:center;gap:10px}
       .btn{padding:10px 14px;border-radius:12px;border:1px solid #223140;background:#0A1220;color:var(--text);cursor:pointer}
       .btn-ghost{border:1px solid #243446}
+      .btn-primary{border:none;background:linear-gradient(135deg,var(--brand),var(--brand2));color:#041018;font-weight:800}
       .icon{width:38px;height:38px;border-radius:12px;border:1px solid #243446;background:#0A1220;display:grid;place-items:center;cursor:pointer}
       .hb,.closex{width:18px;height:18px;position:relative}
       .hb span{position:absolute;left:0;right:0;height:2px;background:#DCE7F5;border-radius:2px}
@@ -77,7 +80,7 @@ export default function App() {
       .closex::before,.closex::after{content:"";position:absolute;left:0;right:0;top:8px;height:2px;background:#DCE7F5;border-radius:2px}
       .closex::before{transform:rotate(45deg)}.closex::after{transform:rotate(-45deg)}
 
-      /* 選單面板 */
+      /* Menu sheet */
       .sheet{position:fixed;inset:0;display:none;z-index:60}
       .sheet.open{display:block}
       .mask{position:absolute;inset:0;background:rgba(0,0,0,.45)}
@@ -85,21 +88,20 @@ export default function App() {
       .panelin{max-width:1080px;margin:0 auto;padding:12px 16px}
       .mtitle{display:flex;align-items:center;gap:10px;justify-content:space-between;margin-bottom:10px}
       .mlist{background:#0C121A;border:1px solid #1E2A36;border-radius:14px;overflow:hidden}
-      .mitem{display:flex;align-items:center;gap:10px;padding:14px 16px;border-top:1px solid rgba(255,255,255,.04)}
+      .mitem{display:flex;align-items:center;gap:10px;padding:14px 16px;border-top:1px solid rgba(255,255,255,.04);cursor:pointer}
       .mitem:first-child{border-top:none}
+      .mitem:hover{background:#0f1722}
       .mfoot{padding:10px 4px;color:var(--muted)}
 
-      /* Hero 區：大圖 + CTA */
+      /* Hero */
       .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
       .hero img{width:100%;height:42vh;object-fit:cover;opacity:.9}
-      .hero .shade{position:absolute;inset:0;
-        background:linear-gradient(180deg,transparent 25%, rgba(7,11,18,.9) 85%)}
+      .hero .shade{position:absolute;inset:0;background:linear-gradient(180deg,transparent 25%, rgba(7,11,18,.9) 85%)}
       .hero-ct{position:absolute;left:50%;transform:translateX(-50%);bottom:26px;width:min(1080px,94vw)}
       .h1{font-size:clamp(26px,5vw,40px);font-weight:800;margin:0 0 12px;letter-spacing:.2px}
-      .cta{display:flex;gap:10px}
-      .btn-primary{border:none;background:linear-gradient(135deg,var(--brand),var(--brand2));color:#041018;font-weight:800}
+      .cta{display:flex;gap:10px;flex-wrap:wrap}
 
-      /* 內容佈局 */
+      /* Layout */
       .wrap{max-width:1080px;margin:0 auto;padding:28px 16px}
       .grid{display:grid;gap:18px}
       @media(min-width:900px){.grid{grid-template-columns:1fr 1fr}}
@@ -107,7 +109,7 @@ export default function App() {
       .card h3{margin:0 0 12px;font-size:18px}
       .muted{color:var(--muted)}
 
-      /* 合作夥伴跑馬燈：更薄更快 */
+      /* Partners marquee */
       .partners{margin-top:26px;border-radius:var(--r-lg);border:1px solid var(--line);background:#0B1219;padding:10px}
       .marquee{overflow:hidden}
       .track{display:flex;gap:18px;align-items:center;width:max-content;animation:scroll 10s linear infinite}
@@ -117,14 +119,13 @@ export default function App() {
       .pill span{font-weight:600;font-size:14px;white-space:nowrap}
       @keyframes scroll{from{transform:translateX(0)} to{transform:translateX(-50%)}}
 
-      /* 底部 */
       footer{margin-top:30px;text-align:center;color:var(--muted)}
     `
     document.head.appendChild(s)
     return () => { s.remove() }
   }, [])
 
-  // Logo（外部圖源）
+  // 外部 logo（免下載）
   const partnerLogos = [
     { name:'Ethereum', logo:'https://cryptologos.cc/logos/ethereum-eth-logo.png' },
     { name:'Binance',  logo:'https://cryptologos.cc/logos/binance-coin-bnb-logo.png' },
@@ -146,15 +147,24 @@ export default function App() {
     { icon:'🌐', text:'選擇語言', type:'external', target: LINKS.language },
   ]
 
+  // ★ 改寫：用元素或 null 的映射（不再用 RefObject）
   function handleMenuClick(item: (typeof menuItems)[number]) {
     try {
       if (item.type === 'external' && item.target) {
         window.open(item.target, '_blank')
-      } else if (item.type === 'anchor') {
-        const map: Record<string, React.RefObject<HTMLDivElement>> = { home: homeRef, rewards: rewardsRef, history: historyRef }
-        map[item.refKey!]?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        return
       }
-    } finally { setMenuOpen(false) }
+      if (item.type === 'anchor' && item.refKey) {
+        const map: Record<'home' | 'rewards' | 'history', HTMLDivElement | null> = {
+          home: homeRef.current,
+          rewards: rewardsRef.current,
+          history: historyRef.current,
+        }
+        map[item.refKey]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    } finally {
+      setMenuOpen(false)
+    }
   }
 
   return (
@@ -185,7 +195,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* 菜單面板 */}
+      {/* Menu sheet */}
       <div className={`sheet ${menuOpen ? 'open' : ''}`} role="dialog" aria-modal="true">
         <div className="mask" onClick={() => setMenuOpen(false)} />
         <div className="panel">
@@ -221,7 +231,10 @@ export default function App() {
         <div className="hero-ct">
           <h1 className="h1">加入 Ether</h1>
           <div className="cta">
-            <button className="btn btn-primary" onClick={() => (document.querySelector('#balances') as any)?.scrollIntoView({behavior:'smooth'})}>
+            <button
+              className="btn btn-primary"
+              onClick={() => (document.querySelector('#balances') as HTMLDivElement | null)?.scrollIntoView({behavior:'smooth'})}
+            >
               已連接成功
             </button>
           </div>
@@ -261,7 +274,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* 收益記錄（示範錨點） */}
+        {/* 收益記錄（示意） */}
         <div className="card" style={{ marginTop:26 }} ref={historyRef}>
           <h3>收益記錄</h3>
           <div className="muted">（示意：之後可換成表格或列表）</div>
