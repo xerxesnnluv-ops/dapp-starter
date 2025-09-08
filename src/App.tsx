@@ -136,7 +136,7 @@ export default function App() {
         <img src={HERO_URL} alt="hero" />
         <div className="shade" />
         <div className="content">
-          <h1 className="h1">加入 IMPERMAX</h1>
+          <h1 className="h1">加入 攀越點</h1>
           <p className="p">功能強大、安全可靠</p>
           <div className="cta-row">
             {!isConnected ? (
