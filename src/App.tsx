@@ -5,7 +5,7 @@ import { formatUnits } from 'viem'
 import { erc20Abi } from './abi/erc20'
 import { wagmiConfig, supportedChains } from './web3'
 
-// ★ 你的外部連結（可改成正式網址）
+// ===== 外部連結（可換成你的正式網址）=====
 const LINKS = {
   whitepaper: 'https://example.com/whitepaper.pdf',
   help: 'https://example.com/help',
@@ -13,6 +13,7 @@ const LINKS = {
   language: 'https://example.com/language',
 }
 
+// ===== USDC 地址 =====
 const USDC: Record<number, `0x${string}`> = {
   1: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
   137: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
@@ -32,7 +33,7 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const currentUsdc = useMemo(() => USDC[chainId ?? 1], [chainId])
 
-  // ★ 錨點（允許 null）
+  // ===== 三個錨點（允許為 null，避免 TS 報錯）=====
   const homeRef = useRef<HTMLDivElement | null>(null)
   const rewardsRef = useRef<HTMLDivElement | null>(null)
   const historyRef = useRef<HTMLDivElement | null>(null)
@@ -50,13 +51,13 @@ export default function App() {
     }
   }
 
-  // ★ 全域樣式（Impermax 風格、乾淨專業）
+  // ===== 全域樣式（專業簡潔、Impermax 風格）=====
   useEffect(() => {
     const s = document.createElement('style')
     s.textContent = `
       :root{
         --bg:#0B0F14; --panel:#0E141B; --muted:#93A4B8; --text:#EAF1F8;
-        --line:#1C2530; --brand:#22D3EE; --brand2:#5B8CFF; --accent:#18C3A1;
+        --line:#1C2530; --brand:#22D3EE; --brand2:#5B8CFF;
         --r:16px; --r-lg:22px; --shadow:0 8px 30px rgba(0,0,0,.35);
       }
       *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);
@@ -109,7 +110,7 @@ export default function App() {
       .card h3{margin:0 0 12px;font-size:18px}
       .muted{color:var(--muted)}
 
-      /* Partners marquee */
+      /* Partners marquee（加速） */
       .partners{margin-top:26px;border-radius:var(--r-lg);border:1px solid var(--line);background:#0B1219;padding:10px}
       .marquee{overflow:hidden}
       .track{display:flex;gap:18px;align-items:center;width:max-content;animation:scroll 10s linear infinite}
@@ -125,7 +126,7 @@ export default function App() {
     return () => { s.remove() }
   }, [])
 
-  // 外部 logo（免下載）
+  // ===== 外部 logo（免下載）=====
   const partnerLogos = [
     { name:'Ethereum', logo:'https://cryptologos.cc/logos/ethereum-eth-logo.png' },
     { name:'Binance',  logo:'https://cryptologos.cc/logos/binance-coin-bnb-logo.png' },
@@ -135,6 +136,7 @@ export default function App() {
     { name:'Base',     logo:'https://cryptologos.cc/logos/base-2-logo.png' },
   ]
 
+  // ===== 右上角選單 =====
   const menuItems: Array<
     { icon: string; text: string; type: 'anchor' | 'external'; target?: string; refKey?: 'home' | 'rewards' | 'history' }
   > = [
@@ -147,7 +149,7 @@ export default function App() {
     { icon:'🌐', text:'選擇語言', type:'external', target: LINKS.language },
   ]
 
-  // ★ 改寫：用元素或 null 的映射（不再用 RefObject）
+  // ===== 修好型別：用「元素本體或 null」做映射（不是 RefObject）=====
   function handleMenuClick(item: (typeof menuItems)[number]) {
     try {
       if (item.type === 'external' && item.target) {
@@ -260,7 +262,7 @@ export default function App() {
           </div>
         </div>
 
-        {/* 合作夥伴 */}
+        {/* 合作夥伴（跑馬燈） */}
         <div className="partners" ref={rewardsRef}>
           <div className="muted" style={{ margin:'0 4px 8px' }}>合作夥伴</div>
           <div className="marquee">
