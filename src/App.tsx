@@ -1,3 +1,4 @@
+// src/App.tsx
 import { useState } from 'react'
 import { useAccount, useConnect, useDisconnect, useBalance, useChainId } from 'wagmi'
 import { readContract } from 'wagmi/actions'
@@ -21,19 +22,37 @@ export default function App() {
   const chainId = useChainId()
   const { disconnect } = useDisconnect()
   const { data: nativeBal } = useBalance({ address, chainId })
+
   const [usdc, setUsdc] = useState<string>('-')
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [lang, setLang] = useState<'zh' | 'en'>('zh')
 
   async function fetchUsdc() {
-    if (!address || !chainId) return setUsdc('-')
+    if (!address || !chainId || !USDC[chainId]) return setUsdc('-')
     try {
       const [raw, decimals] = await Promise.all([
-        readContract(wagmiConfig, { address: USDC[chainId], abi: erc20Abi, functionName: 'balanceOf', args: [address] }),
-        readContract(wagmiConfig, { address: USDC[chainId], abi: erc20Abi, functionName: 'decimals' }),
+        readContract(wagmiConfig, {
+          address: USDC[chainId],
+          abi: erc20Abi,
+          functionName: 'balanceOf',
+          args: [address],
+        }),
+        readContract(wagmiConfig, {
+          address: USDC[chainId],
+          abi: erc20Abi,
+          functionName: 'decimals',
+        }),
       ])
       setUsdc(formatUnits(raw as bigint, Number(decimals)))
     } catch {
       setUsdc('讀取失敗')
     }
+  }
+
+  // 右上角選單的連結（可換成你的）
+  const links = {
+    whitepaper: 'https://example.com/whitepaper.pdf',
+    help: 'https://example.com/help-center',
   }
 
   return (
@@ -42,18 +61,25 @@ export default function App() {
       <header style={{ display: 'flex', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid #1f2937' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ width: 28, height: 28, background: 'linear-gradient(135deg,#22d3ee,#6366f1)', borderRadius: 8 }} />
-          <strong>悟淨・DeFi DApp</strong>
+          <strong>{lang === 'zh' ? '悟淨・DeFi DApp' : 'Wujing • DeFi DApp'}</strong>
         </div>
-        <div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {!isConnected ? (
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {connectors.map(c => (
+              {connectors.map((c) => (
                 <button
                   key={c.uid}
                   onClick={() => connect({ connector: c })}
-                  style={{ padding: '8px 12px', background: '#111827', border: '1px solid #374151', borderRadius: 8, cursor: 'pointer' }}
+                  style={{
+                    padding: '8px 12px',
+                    background: '#111827',
+                    border: '1px solid #374151',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                  }}
                 >
-                  連線 {c.name}
+                  {lang === 'zh' ? '連線' : 'Connect'} {c.name}
                 </button>
               ))}
             </div>
@@ -62,53 +88,144 @@ export default function App() {
               onClick={() => disconnect()}
               style={{ padding: '8px 12px', background: '#111827', border: '1px solid #374151', borderRadius: 8, cursor: 'pointer' }}
             >
-              斷開連線
+              {lang === 'zh' ? '斷開連線' : 'Disconnect'}
             </button>
           )}
+
+          {/* 右上角選單（無 useRef） */}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              style={{
+                padding: '8px 12px',
+                background: '#0ea5e9',
+                borderRadius: 8,
+                cursor: 'pointer',
+                border: 'none',
+              }}
+            >
+              {lang === 'zh' ? '選單' : 'Menu'}
+            </button>
+
+            {menuOpen && (
+              <div
+                role="menu"
+                style={{
+                  position: 'absolute',
+                  right: 0,
+                  marginTop: 8,
+                  minWidth: 200,
+                  background: '#0f172a',
+                  border: '1px solid #1f2937',
+                  borderRadius: 10,
+                  padding: 8,
+                  zIndex: 10,
+                }}
+              >
+                <a
+                  href={links.whitepaper}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ display: 'block', padding: 10, borderRadius: 8, textDecoration: 'none', color: 'white' }}
+                >
+                  📄 {lang === 'zh' ? '白皮書' : 'Whitepaper'}
+                </a>
+                <a
+                  href={links.help}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ display: 'block', padding: 10, borderRadius: 8, textDecoration: 'none', color: 'white' }}
+                >
+                  💬 {lang === 'zh' ? '幫助中心' : 'Help Center'}
+                </a>
+
+                <div style={{ height: 1, background: '#1f2937', margin: '6px 0' }} />
+
+                <div style={{ padding: 10, display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={() => setLang('zh')}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: 6,
+                      background: lang === 'zh' ? '#2563eb' : '#111827',
+                      border: '1px solid #374151',
+                      color: 'white',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    中文
+                  </button>
+                  <button
+                    onClick={() => setLang('en')}
+                    style={{
+                      padding: '6px 10px',
+                      borderRadius: 6,
+                      background: lang === 'en' ? '#2563eb' : '#111827',
+                      border: '1px solid #374151',
+                      color: 'white',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    EN
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
       {/* Main */}
       <main style={{ maxWidth: 960, margin: '0 auto', padding: '40px 20px' }}>
-        <h1 style={{ fontSize: 28, marginBottom: 16 }}>Bitget / Trust 相容・正式版介面</h1>
-        <p style={{ opacity: 0.8, marginBottom: 24 }}>支援 Injected（錢包內建瀏覽器）與 WalletConnect v2。</p>
+        <h1 style={{ fontSize: 28, marginBottom: 14 }}>
+          {lang === 'zh' ? 'Bitget / Trust 相容・正式版介面' : 'Bitget / Trust Compatible • Pro UI'}
+        </h1>
+        <p style={{ opacity: 0.8, marginBottom: 24 }}>
+          {lang === 'zh'
+            ? '支援 Injected（錢包內建瀏覽器）與 WalletConnect v2。'
+            : 'Supports Injected (in-app browser) & WalletConnect v2.'}
+        </p>
 
-        {/* 狀態 */}
-        <section style={{ background: '#0f172a', border: '1px solid #1f2937', borderRadius: 12, padding: 18, marginBottom: 20 }}>
-          <h2 style={{ fontSize: 18, marginBottom: 10 }}>連線狀態</h2>
+        {/* 連線狀態卡片 */}
+        <section style={{ background: '#0f172a', border: '1px solid #1f2937', borderRadius: 12, padding: 18, marginBottom: 18 }}>
+          <h2 style={{ fontSize: 18, marginBottom: 8 }}>{lang === 'zh' ? '連線狀態' : 'Connection'}</h2>
           <div style={{ fontSize: 14 }}>
-            <div>狀態：{status}</div>
-            {error && <div style={{ color: '#fca5a5' }}>錯誤：{String(error.message ?? error)}</div>}
-            <div>地址：{address ?? '-'}</div>
-            <div>鏈 ID：{chainId ?? '-'}</div>
+            <div>{lang === 'zh' ? '狀態' : 'Status'}：{status}</div>
+            {error && <div style={{ color: '#fca5a5' }}>{lang === 'zh' ? '錯誤' : 'Error'}：{String(error.message ?? error)}</div>}
+            <div>{lang === 'zh' ? '地址' : 'Address'}：{address ?? '-'}</div>
+            <div>Chain ID：{chainId ?? '-'}</div>
           </div>
         </section>
 
-        {/* 餘額 */}
-        <section style={{ background: '#0f172a', border: '1px solid #1f2937', borderRadius: 12, padding: 18, marginBottom: 20 }}>
-          <h2 style={{ fontSize: 18, marginBottom: 10 }}>餘額</h2>
+        {/* 餘額卡片 */}
+        <section style={{ background: '#0f172a', border: '1px solid #1f2937', borderRadius: 12, padding: 18, marginBottom: 18 }}>
+          <h2 style={{ fontSize: 18, marginBottom: 8 }}>{lang === 'zh' ? '餘額' : 'Balances'}</h2>
           <div style={{ fontSize: 14 }}>
-            <div>原生幣：{nativeBal ? `${nativeBal.formatted} ${nativeBal.symbol}` : '-'}</div>
+            <div>
+              {lang === 'zh' ? '原生幣' : 'Native'}：{nativeBal ? `${nativeBal.formatted} ${nativeBal.symbol}` : '-'}
+            </div>
             <div>USDC：{usdc}</div>
             <button
               onClick={fetchUsdc}
-              style={{ marginTop: 10, padding: '8px 12px', background: '#1d4ed8', borderRadius: 8, cursor: 'pointer' }}
+              style={{ marginTop: 10, padding: '8px 12px', background: '#1d4ed8', borderRadius: 8, cursor: 'pointer', border: 'none' }}
             >
-              重新讀取 USDC
+              {lang === 'zh' ? '重新讀取 USDC' : 'Refresh USDC'}
             </button>
           </div>
         </section>
 
         {/* 切換鏈 */}
         <section style={{ background: '#0f172a', border: '1px solid #1f2937', borderRadius: 12, padding: 18 }}>
-          <h2 style={{ fontSize: 18, marginBottom: 10 }}>切換鏈</h2>
+          <h2 style={{ fontSize: 18, marginBottom: 8 }}>{lang === 'zh' ? '切換鏈' : 'Switch Chain'}</h2>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {supportedChains.map(c => (
+            {supportedChains.map((c) => (
               <button
                 key={c.id}
                 onClick={async () => {
                   const provider = (window as any).ethereum
-                  if (!provider?.request) return alert('未偵測到以太坊提供者')
+                  if (!provider?.request) return alert(lang === 'zh' ? '未偵測到以太坊提供者' : 'No Ethereum provider detected')
                   try {
                     await provider.request({
                       method: 'wallet_switchEthereumChain',
@@ -130,7 +247,13 @@ export default function App() {
                     }
                   }
                 }}
-                style={{ padding: '8px 12px', background: '#111827', border: '1px solid #374151', borderRadius: 8, cursor: 'pointer' }}
+                style={{
+                  padding: '8px 12px',
+                  background: '#111827',
+                  border: '1px solid #374151',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                }}
               >
                 {c.name}
               </button>
@@ -139,9 +262,7 @@ export default function App() {
         </section>
       </main>
 
-      <footer style={{ textAlign: 'center', padding: 20, opacity: 0.6, fontSize: 12 }}>
-        © 2025 悟淨・DeFi DApp
-      </footer>
+      <footer style={{ textAlign: 'center', padding: 20, opacity: 0.6, fontSize: 12 }}>© 2025 悟淨・DeFi DApp</footer>
     </div>
   )
 }
