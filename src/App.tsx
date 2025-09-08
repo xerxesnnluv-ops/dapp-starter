@@ -43,12 +43,12 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const currentUsdc = useMemo(() => USDC[chainId ?? 1], [chainId])
 
-  // 安全錨點（允許為 null，避免 TS2322）
-  const homeRef = useRef<HTMLDivElement | null>(null)
-  const rewardsRef = useRef<HTMLDivElement | null>(null)
-  const historyRef = useRef<HTMLDivElement | null>(null)
+  // ✅ 修正：非空斷言，讓 ref 屬性型別符合 React 要求
+  const homeRef = useRef<HTMLDivElement>(null!)
+  const rewardsRef = useRef<HTMLDivElement>(null!)
+  const historyRef = useRef<HTMLDivElement>(null!)
 
-  // 全域樣式（專業＋簡潔）
+  // 全域樣式
   useEffect(() => {
     const s = document.createElement('style')
     s.textContent = `
@@ -61,7 +61,6 @@ export default function App() {
         font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans TC","PingFang TC",Arial}
       a{color:inherit;text-decoration:none}
 
-      /* Topbar */
       .top{position:sticky;top:0;z-index:50;background:rgba(10,14,20,.7);
         backdrop-filter:saturate(160%) blur(10px);border-bottom:1px solid var(--line)}
       .topin{max-width:1080px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:12px 16px}
@@ -78,7 +77,6 @@ export default function App() {
       .closex::before,.closex::after{content:"";position:absolute;left:0;right:0;top:8px;height:2px;background:#DCE7F5;border-radius:2px}
       .closex::before{transform:rotate(45deg)}.closex::after{transform:rotate(-45deg)}
 
-      /* Menu sheet */
       .sheet{position:fixed;inset:0;display:none;z-index:60}
       .sheet.open{display:block}
       .mask{position:absolute;inset:0;background:rgba(0,0,0,.45)}
@@ -91,7 +89,6 @@ export default function App() {
       .mitem:hover{background:#0f1722}
       .mfoot{padding:10px 4px;color:var(--muted)}
 
-      /* Hero */
       .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
       .hero img{width:100%;height:42vh;object-fit:cover;opacity:.9}
       .hero .shade{position:absolute;inset:0;background:linear-gradient(180deg,transparent 25%, rgba(7,11,18,.9) 85%)}
@@ -99,7 +96,6 @@ export default function App() {
       .h1{font-size:clamp(26px,5vw,40px);font-weight:800;margin:0 0 12px;letter-spacing:.2px}
       .cta{display:flex;gap:10px;flex-wrap:wrap}
 
-      /* Layout */
       .wrap{max-width:1080px;margin:0 auto;padding:28px 16px}
       .grid{display:grid;gap:18px}
       @media(min-width:900px){.grid{grid-template-columns:1fr 1fr}}
@@ -107,7 +103,6 @@ export default function App() {
       .card h3{margin:0 0 12px;font-size:18px}
       .muted{color:var(--muted)}
 
-      /* Partners marquee（較快速度） */
       .partners{margin-top:26px;border-radius:var(--r-lg);border:1px solid var(--line);background:#0B1219;padding:10px}
       .marquee{overflow:hidden}
       .track{display:flex;gap:18px;align-items:center;width:max-content;animation:scroll 9s linear infinite}
@@ -136,7 +131,6 @@ export default function App() {
     }
   }
 
-  // 選單項目
   const menuItems: Array<
     { label: string; type: 'anchor' | 'external'; refKey?: 'home' | 'rewards' | 'history'; target?: string }
   > = [
@@ -148,7 +142,6 @@ export default function App() {
     { label: '選擇語言', type: 'external', target: LINKS.language },
   ]
 
-  // 安全捲動（不做物件映射，TS 安心）
   function handleMenuClick(item: (typeof menuItems)[number]) {
     try {
       if (item.type === 'external' && item.target) {
