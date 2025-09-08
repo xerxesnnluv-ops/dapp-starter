@@ -122,7 +122,7 @@ export default function App() {
         <div className="topbar-inner">
           <div className="brand">
             <div className="logo" />
-            <div className="btitle">Impermax · 悟淨</div>
+            <div className="btitle">攀越點Dapp</div>
           </div>
           <div className="hamb"><span /></div>
         </div>
@@ -172,7 +172,7 @@ export default function App() {
               <div className="logo-pill" key={t}>{t}</div>
             ))}
           </div>
-          <div className="note">合作夥伴（示意，可放品牌 Logo）</div>
+          <div className="note">合作夥伴（測試中，可放品牌 Logo）</div>
         </div>
 
         {/* 功能卡片 */}
@@ -208,7 +208,7 @@ export default function App() {
         </section>
       </div>
 
-      <footer>© {new Date().getFullYear()} 悟淨 · DeFi DApp</footer>
+      <footer>© {new Date().getFullYear()} 攀越點</footer>
     </>
   )
 }
