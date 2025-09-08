@@ -1,23 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useAccount, useConnect, useDisconnect, useBalance, useChainId } from 'wagmi'
 import { readContract } from 'wagmi/actions'
 import { formatUnits } from 'viem'
 import { erc20Abi } from './abi/erc20'
 import { wagmiConfig, supportedChains } from './web3'
 
-/** ---------------------------
- *  連結與常數
- *  --------------------------*/
-const LINKS = {
-  homepage: '/',
-  account: '#',
-  rewards: '#',
-  history: '#',
-  whitepaper: 'https://example.com/whitepaper', // 換成你的白皮書
-  help: 'https://example.com/help',             // 換成你的幫助中心
-  language: '#',
-}
-
+// 各鏈上的 USDC 地址
 const USDC: Record<number, `0x${string}`> = {
   1: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
   137: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
@@ -27,34 +15,20 @@ const USDC: Record<number, `0x${string}`> = {
   10: '0x7F5c764cBc14f9669B88837ca1490cCa17c31607',
 }
 
-const PARTNERS = [
-  { name: 'Ethereum',  url: 'https://cryptologos.cc/logos/ethereum-eth-logo.svg' },
-  { name: 'BNB Chain', url: 'https://cryptologos.cc/logos/bnb-bnb-logo.svg' },
-  { name: 'Polygon',   url: 'https://cryptologos.cc/logos/polygon-matic-logo.svg' },
-  { name: 'Arbitrum',  url: 'https://cryptologos.cc/logos/arbitrum-arb-logo.svg' },
-  { name: 'Base',      url: 'https://cryptologos.cc/logos/base-base-logo.svg' },
-  { name: 'Optimism',  url: 'https://cryptologos.cc/logos/optimism-ethereum-op-logo.svg' },
-  { name: 'Avalanche', url: 'https://cryptologos.cc/logos/avalanche-avax-logo.svg' },
-  { name: 'Fantom',    url: 'https://cryptologos.cc/logos/fantom-ftm-logo.svg' },
-] as const
-
 export default function App() {
-  // web3 狀態
   const { connectors, connect, status, error } = useConnect()
   const { isConnected, address } = useAccount()
   const chainId = useChainId()
   const { disconnect } = useDisconnect()
   const { data: nativeBal } = useBalance({ address, chainId })
   const [usdc, setUsdc] = useState<string>('-')
-  const [menuOpen, setMenuOpen] = useState(false)
-  const currentUsdc = useMemo(() => USDC[chainId ?? 1], [chainId])
 
   async function fetchUsdc() {
-    if (!address || !currentUsdc) return setUsdc('-')
+    if (!address || !chainId) return setUsdc('-')
     try {
       const [raw, decimals] = await Promise.all([
-        readContract(wagmiConfig, { address: currentUsdc, abi: erc20Abi, functionName: 'balanceOf', args: [address] }),
-        readContract(wagmiConfig, { address: currentUsdc, abi: erc20Abi, functionName: 'decimals' }),
+        readContract(wagmiConfig, { address: USDC[chainId], abi: erc20Abi, functionName: 'balanceOf', args: [address] }),
+        readContract(wagmiConfig, { address: USDC[chainId], abi: erc20Abi, functionName: 'decimals' }),
       ])
       setUsdc(formatUnits(raw as bigint, Number(decimals)))
     } catch {
@@ -62,145 +36,112 @@ export default function App() {
     }
   }
 
-  async function switchChain(id: number, name: string, nativeCurrency: any, rpcUrls: string[]) {
-    const provider = (window as any).ethereum
-    if (!provider?.request) return alert('未偵測到以太坊提供者')
-    try {
-      await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: `0x${id.toString(16)}` }] })
-    } catch (e: any) {
-      if (e?.code === 4902) {
-        await provider.request({
-          method: 'wallet_addEthereumChain',
-          params: [{ chainId: `0x${id.toString(16)}`, chainName: name, nativeCurrency, rpcUrls }],
-        })
-      }
-    }
-  }
-
   return (
-    <div className="page">
-      <style>{`
-        :root { --bg:#0B0F1A; --card:#0f172a; --line:#1f2937; --muted:#9CA3AF; --btn:#111827; --btnline:#374151; }
-        *{box-sizing:border-box} body,html,#root{height:100%}
-        .page{min-height:100vh;background:var(--bg);color:#fff;font-family:ui-sans-serif,system-ui,'PingFang TC',Noto Sans TC,Segoe UI,Roboto}
-        .container{max-width:1000px;margin:0 auto;padding:20px}
-        header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:50}
-        .logo{display:flex;align-items:center;gap:10px}
-        .logo-badge{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#22d3ee,#6366f1)}
-        .hstack{display:flex;gap:10px;flex-wrap:wrap}
-        .btn{padding:10px 14px;background:var(--btn);border:1px solid var(--btnline);border-radius:10px;color:#fff;cursor:pointer}
-        .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
-        .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-        h1{font-size:32px;margin:24px 0 8px} h2{font-size:18px;margin:0 0 10px} .muted{color:var(--muted)}
-        .drawer-mask{position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:saturate(1.2) blur(2px);opacity:0;pointer-events:none;transition:.2s}
-        .drawer-mask.show{opacity:1;pointer-events:auto}
-        .drawer{position:fixed;right:0;top:0;height:100%;width:78%;max-width:360px;background:#0e1422;border-left:1px solid var(--line);transform:translateX(100%);transition:.22s}
-        .drawer.show{transform:translateX(0)}
-        .menu-hd{display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid var(--line)}
-        .menu-list a{display:flex;align-items:center;gap:10px;padding:14px 16px;color:#e5e7eb;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.04)}
-        .menu-list a:hover{background:rgba(255,255,255,.03)}
-        .hero{margin:14px 0 28px;padding:18px;border:1px dashed #1e293b;border-radius:14px;background:linear-gradient(180deg,rgba(96,165,250,.08),rgba(0,0,0,0))}
-        .partners{position:relative;overflow:hidden;border-radius:12px;border:1px solid var(--line);margin-top:14px}
-        .marquee{display:flex;gap:28px;align-items:center;white-space:nowrap;will-change:transform;animation:scroll 18s linear infinite}
-        .marquee img{height:28px;width:auto;filter:saturate(120%)}
-        @keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-        footer{padding:24px 0 60px;text-align:center;color:#94a3b8;border-top:1px solid var(--line);margin-top:28px}
-        @media (max-width:800px){ .grid2{grid-template-columns:1fr} h1{font-size:26px} }
-      `}</style>
-
-      {/* 頂部列 */}
-      <header>
-        <div className="logo">
-          <div className="logo-badge" />
+    <div style={{ minHeight: '100vh', background: '#0B0F1A', color: 'white', fontFamily: 'ui-sans-serif' }}>
+      {/* Header */}
+      <header style={{ display: 'flex', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid #1f2937' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 28, height: 28, background: 'linear-gradient(135deg,#22d3ee,#6366f1)', borderRadius: 8 }} />
           <strong>悟淨・DeFi DApp</strong>
         </div>
-        <div className="hstack">
+        <div>
           {!isConnected ? (
-            connectors.map(c => (
-              <button key={c.uid} className="btn" onClick={() => connect({ connector: c })}>
-                連線：{c.name}
-              </button>
-            ))
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {connectors.map(c => (
+                <button
+                  key={c.uid}
+                  onClick={() => connect({ connector: c })}
+                  style={{ padding: '8px 12px', background: '#111827', border: '1px solid #374151', borderRadius: 8, cursor: 'pointer' }}
+                >
+                  連線 {c.name}
+                </button>
+              ))}
+            </div>
           ) : (
-            <>
-              <button className="btn" onClick={() => disconnect()}>斷開連線</button>
-              <button className="btn" onClick={() => setMenuOpen(true)}>選單</button>
-            </>
+            <button
+              onClick={() => disconnect()}
+              style={{ padding: '8px 12px', background: '#111827', border: '1px solid #374151', borderRadius: 8, cursor: 'pointer' }}
+            >
+              斷開連線
+            </button>
           )}
         </div>
       </header>
 
-      {/* 抽屜選單 */}
-      <div className={`drawer-mask ${menuOpen ? 'show' : ''}`} onClick={() => setMenuOpen(false)} />
-      <aside className={`drawer ${menuOpen ? 'show' : ''}`} aria-hidden={!menuOpen}>
-        <div className="menu-hd">
-          <strong>功能選單</strong>
-          <button className="btn" onClick={() => setMenuOpen(false)}>關閉</button>
-        </div>
-        <nav className="menu-list" onClick={() => setMenuOpen(false)}>
-          <a href={LINKS.homepage}>🏠 首頁</a>
-          <a href={LINKS.account}>👤 帳號</a>
-          <a href={LINKS.rewards}>🎁 獎勵</a>
-          <a href={LINKS.history}>🧾 收益記錄</a>
-          <a href={LINKS.whitepaper} target="_blank" rel="noreferrer">📄 白皮書</a>
-          <a href={LINKS.help} target="_blank" rel="noreferrer">❓ 幫助中心</a>
-          <a href={LINKS.language}>🌐 選擇語言</a>
-        </nav>
-      </aside>
+      {/* Main */}
+      <main style={{ maxWidth: 960, margin: '0 auto', padding: '40px 20px' }}>
+        <h1 style={{ fontSize: 28, marginBottom: 16 }}>Bitget / Trust 相容・正式版介面</h1>
+        <p style={{ opacity: 0.8, marginBottom: 24 }}>支援 Injected（錢包內建瀏覽器）與 WalletConnect v2。</p>
 
-      {/* 內容 */}
-      <div className="container">
-        <section className="hero">
-          <h1>Bitget / Trust 相容 · 正式版介面</h1>
-          <p className="muted">支援 Injected（錢包內建瀏覽器）與 WalletConnect v2。介面採卡片式設計，清晰易讀。</p>
-        </section>
-
-        <section className="grid2">
-          <div className="card">
-            <h2>連線狀態</h2>
-            <div className="muted">
-              <div>狀態：{status}</div>
-              {error && <div style={{ color: '#fca5a5' }}>錯誤：{String(error.message ?? error)}</div>}
-              <div>地址：{address ?? '-'}</div>
-              <div>鏈 ID：{chainId ?? '-'}</div>
-            </div>
-          </div>
-
-          <div className="card">
-            <h2>餘額</h2>
-            <div className="muted">
-              <div>原生幣：{nativeBal ? `${nativeBal.formatted} ${nativeBal.symbol}` : '-'}</div>
-              <div>USDC（當前鏈）：{usdc}</div>
-              <button className="btn" style={{ marginTop: 10 }} onClick={fetchUsdc}>重新讀取 USDC</button>
-            </div>
+        {/* 狀態 */}
+        <section style={{ background: '#0f172a', border: '1px solid #1f2937', borderRadius: 12, padding: 18, marginBottom: 20 }}>
+          <h2 style={{ fontSize: 18, marginBottom: 10 }}>連線狀態</h2>
+          <div style={{ fontSize: 14 }}>
+            <div>狀態：{status}</div>
+            {error && <div style={{ color: '#fca5a5' }}>錯誤：{String(error.message ?? error)}</div>}
+            <div>地址：{address ?? '-'}</div>
+            <div>鏈 ID：{chainId ?? '-'}</div>
           </div>
         </section>
 
-        <section className="card" style={{ marginTop: 18 }}>
-          <h2>切換鏈</h2>
-          <div className="hstack">
+        {/* 餘額 */}
+        <section style={{ background: '#0f172a', border: '1px solid #1f2937', borderRadius: 12, padding: 18, marginBottom: 20 }}>
+          <h2 style={{ fontSize: 18, marginBottom: 10 }}>餘額</h2>
+          <div style={{ fontSize: 14 }}>
+            <div>原生幣：{nativeBal ? `${nativeBal.formatted} ${nativeBal.symbol}` : '-'}</div>
+            <div>USDC：{usdc}</div>
+            <button
+              onClick={fetchUsdc}
+              style={{ marginTop: 10, padding: '8px 12px', background: '#1d4ed8', borderRadius: 8, cursor: 'pointer' }}
+            >
+              重新讀取 USDC
+            </button>
+          </div>
+        </section>
+
+        {/* 切換鏈 */}
+        <section style={{ background: '#0f172a', border: '1px solid #1f2937', borderRadius: 12, padding: 18 }}>
+          <h2 style={{ fontSize: 18, marginBottom: 10 }}>切換鏈</h2>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {supportedChains.map(c => (
               <button
                 key={c.id}
-                className="btn"
-                onClick={() => switchChain(c.id, c.name, c.nativeCurrency, c.rpcUrls?.default?.http ?? [])}
+                onClick={async () => {
+                  const provider = (window as any).ethereum
+                  if (!provider?.request) return alert('未偵測到以太坊提供者')
+                  try {
+                    await provider.request({
+                      method: 'wallet_switchEthereumChain',
+                      params: [{ chainId: `0x${c.id.toString(16)}` }],
+                    })
+                  } catch (e: any) {
+                    if (e?.code === 4902) {
+                      await provider.request({
+                        method: 'wallet_addEthereumChain',
+                        params: [
+                          {
+                            chainId: `0x${c.id.toString(16)}`,
+                            chainName: c.name,
+                            nativeCurrency: c.nativeCurrency,
+                            rpcUrls: c.rpcUrls.default.http,
+                          },
+                        ],
+                      })
+                    }
+                  }
+                }}
+                style={{ padding: '8px 12px', background: '#111827', border: '1px solid #374151', borderRadius: 8, cursor: 'pointer' }}
               >
                 {c.name}
               </button>
             ))}
           </div>
         </section>
+      </main>
 
-        <section className="partners">
-          <div className="marquee">
-            {[...PARTNERS, ...PARTNERS].map((p, i) => (
-              <img key={p.name + i} src={p.url} alt={p.name} title={p.name} />
-            ))}
-          </div>
-        </section>
-
-        <footer>© 2025 悟淨・DeFi DApp</footer>
-      </div>
+      <footer style={{ textAlign: 'center', padding: 20, opacity: 0.6, fontSize: 12 }}>
+        © 2025 悟淨・DeFi DApp
+      </footer>
     </div>
   )
 }
