@@ -5,7 +5,7 @@ import { formatUnits } from 'viem'
 import { erc20Abi } from './abi/erc20'
 import { wagmiConfig, supportedChains } from './web3'
 
-/** ←← 這裡換成你的正式連結即可 */
+/** 換成你的正式連結 */
 const LINKS = {
   whitepaper: 'https://example.com/whitepaper.pdf',
   help: 'https://example.com/help',
@@ -32,7 +32,7 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const currentUsdc = useMemo(() => USDC[chainId ?? 1], [chainId])
 
-  // 區塊錨點（給選單用）
+  // 區塊錨點
   const homeRef = useRef<HTMLDivElement | null>(null)
   const rewardsRef = useRef<HTMLDivElement | null>(null)
   const historyRef = useRef<HTMLDivElement | null>(null)
@@ -54,83 +54,77 @@ export default function App() {
     const s = document.createElement('style')
     s.textContent = `
       :root{
-        --bg:#0b1020;--bg-2:#0d1326;--line:#1c2842;--text:#e7ecf6;
-        --brand:#22d3ee;--brand-2:#6366f1;--ok:#14b8a6;
-        --shadow:0 6px 24px rgba(0,0,0,.28);
-        --r:16px;--pill:999px;
+        --bg:#0B0F14; --panel:#0E141B; --muted:#93A4B8; --text:#EAF1F8;
+        --line:#1C2530; --brand:#22D3EE; --brand2:#5B8CFF; --accent:#18C3A1;
+        --r:16px; --r-lg:22px; --shadow:0 8px 30px rgba(0,0,0,.35);
       }
-      *{box-sizing:border-box}
-      body{margin:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"PingFang TC","Noto Sans TC",Arial}
+      *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);
+        font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans TC","PingFang TC",Arial}
 
-      /* animated bg */
-      .bg-anim{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none;
-        background: radial-gradient(900px 600px at 15% -10%, #0d1630 0%, transparent 60%), var(--bg)}
-      .blob{position:absolute;width:48vw;height:48vw;min-width:380px;min-height:380px;
-        filter:blur(60px);opacity:.22;mix-blend-mode:screen;border-radius:50%;animation:float 22s ease-in-out infinite}
-      .blob.a{left:-10vw;top:5vh;background:radial-gradient(circle at 30% 30%, #22d3ee, transparent 60%)}
-      .blob.b{right:-12vw;top:-6vh;background:radial-gradient(circle at 70% 40%, #6366f1, transparent 60%);animation-delay:-6s}
-      .blob.c{left:20vw;bottom:-12vh;background:radial-gradient(circle at 50% 60%, #14b8a6, transparent 60%);animation-delay:-12s}
-      @keyframes float{0%,100%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(2vw,-2vh,0) scale(1.06)}}
-
-      /* topbar */
-      .topbar{position:sticky;top:0;z-index:40;background:rgba(13,19,38,.75);
-        backdrop-filter:saturate(160%) blur(10px);border-bottom:1px solid #18243d}
-      .topbar-in{max-width:1080px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:12px 16px}
+      /* 頂部列 */
+      .top{position:sticky;top:0;z-index:50;background:rgba(10,14,20,.7);
+        backdrop-filter:saturate(160%) blur(10px);border-bottom:1px solid var(--line)}
+      .topin{max-width:1080px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:12px 16px}
       .brand{display:flex;align-items:center;gap:10px}
-      .logo{width:28px;height:28px;border-radius:10px;background:linear-gradient(135deg,var(--brand),var(--brand-2))}
-      .actions{display:flex;align-items:center;gap:8px}
-      .icon-btn{width:38px;height:38px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:#111b30;
-        display:grid;place-items:center;cursor:pointer}
-      .hamburger,.close-x{width:18px;height:18px;position:relative}
-      .hamburger span{position:absolute;left:0;right:0;height:2px;background:#dbe4f7;border-radius:2px}
-      .hamburger span:nth-child(1){top:2px}.hamburger span:nth-child(2){top:8px}.hamburger span:nth-child(3){top:14px}
-      .close-x::before,.close-x::after{content:"";position:absolute;left:0;right:0;top:8px;height:2px;background:#dbe4f7;border-radius:2px}
-      .close-x::before{transform:rotate(45deg)}.close-x::after{transform:rotate(-45deg)}
+      .logo{width:28px;height:28px;border-radius:9px;background:linear-gradient(135deg,var(--brand),var(--brand2))}
+      .right{display:flex;align-items:center;gap:10px}
+      .btn{padding:10px 14px;border-radius:12px;border:1px solid #223140;background:#0A1220;color:var(--text);cursor:pointer}
+      .btn-ghost{border:1px solid #243446}
+      .icon{width:38px;height:38px;border-radius:12px;border:1px solid #243446;background:#0A1220;display:grid;place-items:center;cursor:pointer}
+      .hb,.closex{width:18px;height:18px;position:relative}
+      .hb span{position:absolute;left:0;right:0;height:2px;background:#DCE7F5;border-radius:2px}
+      .hb span:nth-child(1){top:2px}.hb span:nth-child(2){top:8px}.hb span:nth-child(3){top:14px}
+      .closex::before,.closex::after{content:"";position:absolute;left:0;right:0;top:8px;height:2px;background:#DCE7F5;border-radius:2px}
+      .closex::before{transform:rotate(45deg)}.closex::after{transform:rotate(-45deg)}
 
-      /* menu sheet */
-      .menu-wrap{position:fixed;inset:0;z-index:50;display:none}
-      .menu-wrap.open{display:block}
-      .menu-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.45)}
-      .menu-panel{position:absolute;left:0;right:0;top:0;background:#0e1428;border-bottom:1px solid #243354;
-        box-shadow:0 20px 40px rgba(0,0,0,.35)}
-      .menu-in{max-width:1080px;margin:0 auto;padding:12px 16px}
-      .menu-title{display:flex;align-items:center;gap:10px;margin-bottom:10px;justify-content:space-between}
-      .menu-list{background:#0c1324;border:1px solid #223154;border-radius:12px;overflow:hidden}
-      .menu-item{display:flex;align-items:center;gap:10px;padding:14px 16px;border-top:1px solid rgba(255,255,255,.04)}
-      .menu-item:first-child{border-top:none}
-      .menu-item span{font-weight:600}
-      .menu-foot{padding:10px 4px;color:#b6c1d9}
+      /* 選單面板 */
+      .sheet{position:fixed;inset:0;display:none;z-index:60}
+      .sheet.open{display:block}
+      .mask{position:absolute;inset:0;background:rgba(0,0,0,.45)}
+      .panel{position:absolute;left:0;right:0;top:0;background:#0E141B;border-bottom:1px solid var(--line);box-shadow:0 20px 40px rgba(0,0,0,.35)}
+      .panelin{max-width:1080px;margin:0 auto;padding:12px 16px}
+      .mtitle{display:flex;align-items:center;gap:10px;justify-content:space-between;margin-bottom:10px}
+      .mlist{background:#0C121A;border:1px solid #1E2A36;border-radius:14px;overflow:hidden}
+      .mitem{display:flex;align-items:center;gap:10px;padding:14px 16px;border-top:1px solid rgba(255,255,255,.04)}
+      .mitem:first-child{border-top:none}
+      .mfoot{padding:10px 4px;color:var(--muted)}
 
-      /* hero */
-      .hero{position:relative;overflow:hidden;border-bottom:1px solid rgba(255,255,255,.06)}
-      .hero img{width:100%;height:38vh;object-fit:cover;opacity:.85}
-      .shade{position:absolute;inset:0;background:linear-gradient(180deg,transparent 28%,rgba(5,8,16,.86) 92%)}
-      .hero-ct{position:absolute;left:50%;transform:translateX(-50%);bottom:28px;width:min(1080px,94vw)}
-      .h1{font-size:clamp(26px,5vw,40px);font-weight:900;margin:0 0 6px}
+      /* Hero 區：大圖 + CTA */
+      .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
+      .hero img{width:100%;height:42vh;object-fit:cover;opacity:.9}
+      .hero .shade{position:absolute;inset:0;
+        background:linear-gradient(180deg,transparent 25%, rgba(7,11,18,.9) 85%)}
+      .hero-ct{position:absolute;left:50%;transform:translateX(-50%);bottom:26px;width:min(1080px,94vw)}
+      .h1{font-size:clamp(26px,5vw,40px);font-weight:800;margin:0 0 12px;letter-spacing:.2px}
+      .cta{display:flex;gap:10px}
+      .btn-primary{border:none;background:linear-gradient(135deg,var(--brand),var(--brand2));color:#041018;font-weight:800}
 
-      /* content */
-      .wrap{max-width:1080px;margin:0 auto;padding:22px 16px}
-      .card{background:var(--bg-2);border:1px solid rgba(255,255,255,.08);border-radius:var(--r);box-shadow:var(--shadow);padding:18px}
-      .grid{display:grid;gap:16px}
+      /* 內容佈局 */
+      .wrap{max-width:1080px;margin:0 auto;padding:28px 16px}
+      .grid{display:grid;gap:18px}
       @media(min-width:900px){.grid{grid-template-columns:1fr 1fr}}
-      h3{margin:0 0 10px;font-size:17px}
-      .btn{padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:#111b30;color:var(--text);cursor:pointer}
-      .btn.primary{border:none;background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#05121a;font-weight:700}
+      .card{background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow);padding:18px}
+      .card h3{margin:0 0 12px;font-size:18px}
+      .muted{color:var(--muted)}
 
-      /* marquee */
-      .partners{padding:12px;border-radius:var(--r);background:#0c1328;margin-top:24px;border:1px solid rgba(255,255,255,.08)}
+      /* 合作夥伴跑馬燈：更薄更快 */
+      .partners{margin-top:26px;border-radius:var(--r-lg);border:1px solid var(--line);background:#0B1219;padding:10px}
       .marquee{overflow:hidden}
-      .track{display:flex;gap:20px;align-items:center;width:max-content;animation:scroll 12s linear infinite}
-      .pill{min-width:120px;height:54px;padding:10px 14px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);
-        border-radius:var(--pill);display:flex;align-items:center;gap:12px}
-      .pill img{width:28px;height:28px;object-fit:contain}
+      .track{display:flex;gap:18px;align-items:center;width:max-content;animation:scroll 10s linear infinite}
+      .pill{min-width:118px;height:48px;padding:8px 12px;border:1px solid #233144;background:rgba(255,255,255,.03);
+        border-radius:999px;display:flex;align-items:center;gap:10px}
+      .pill img{width:26px;height:26px;object-fit:contain}
       .pill span{font-weight:600;font-size:14px;white-space:nowrap}
       @keyframes scroll{from{transform:translateX(0)} to{transform:translateX(-50%)}}
+
+      /* 底部 */
+      footer{margin-top:30px;text-align:center;color:var(--muted)}
     `
     document.head.appendChild(s)
     return () => { s.remove() }
   }, [])
 
+  // Logo（外部圖源）
   const partnerLogos = [
     { name:'Ethereum', logo:'https://cryptologos.cc/logos/ethereum-eth-logo.png' },
     { name:'Binance',  logo:'https://cryptologos.cc/logos/binance-coin-bnb-logo.png' },
@@ -140,12 +134,11 @@ export default function App() {
     { name:'Base',     logo:'https://cryptologos.cc/logos/base-2-logo.png' },
   ]
 
-  // 選單項目（有外部連結／內部錨點）
   const menuItems: Array<
     { icon: string; text: string; type: 'anchor' | 'external'; target?: string; refKey?: 'home' | 'rewards' | 'history' }
   > = [
     { icon:'🏠', text:'首頁', type:'anchor',  refKey:'home' },
-    { icon:'👛', text:'帳號', type:'anchor', refKey:'home' }, // 可換到帳號區塊
+    { icon:'👛', text:'帳號', type:'anchor', refKey:'home' },
     { icon:'🎁', text:'獎勵', type:'external', target: LINKS.rewards },
     { icon:'⏱️', text:'收益記錄', type:'anchor', refKey:'history' },
     { icon:'📄', text:'白皮書', type:'external', target: LINKS.whitepaper },
@@ -156,107 +149,107 @@ export default function App() {
   function handleMenuClick(item: (typeof menuItems)[number]) {
     try {
       if (item.type === 'external' && item.target) {
-        // 錢包內建瀏覽器也能打開；_blank 對多數錢包 OK
         window.open(item.target, '_blank')
       } else if (item.type === 'anchor') {
-        const map: Record<string, React.RefObject<HTMLDivElement>> = {
-          home: homeRef, rewards: rewardsRef, history: historyRef,
-        }
-        const targetRef = item.refKey ? map[item.refKey] : undefined
-        targetRef?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        const map: Record<string, React.RefObject<HTMLDivElement>> = { home: homeRef, rewards: rewardsRef, history: historyRef }
+        map[item.refKey!]?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
-    } finally {
-      setMenuOpen(false)
-    }
+    } finally { setMenuOpen(false) }
   }
 
   return (
     <div>
-      {/* 動態背景 */}
-      <div className="bg-anim"><div className="blob a" /><div className="blob b" /><div className="blob c" /></div>
-
       {/* Topbar */}
-      <div className="topbar">
-        <div className="topbar-in">
+      <div className="top">
+        <div className="topin">
           <div className="brand">
             <div className="logo" />
-            <strong>攀越點</strong>
+            <strong>悟淨・DeFi DApp</strong>
           </div>
-          <div className="actions">
+          <div className="right">
             {isConnected ? (
-              <button className="btn" onClick={() => disconnect()}>斷開連線</button>
+              <button className="btn btn-ghost" onClick={() => disconnect()}>斷開連線</button>
             ) : (
               <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
                 {connectors.map(c => (
-                  <button key={c.uid} className="btn" onClick={() => connect({ connector:c })}>
+                  <button key={c.uid} className="btn btn-ghost" onClick={() => connect({ connector:c })}>
                     連線：{c.name}
                   </button>
                 ))}
               </div>
             )}
-            <button className="icon-btn" onClick={() => setMenuOpen(true)} aria-label="open menu">
-              <div className="hamburger" aria-hidden><span></span><span></span><span></span></div>
+            <button className="icon" onClick={() => setMenuOpen(true)} aria-label="open menu">
+              <div className="hb" aria-hidden><span></span><span></span><span></span></div>
             </button>
           </div>
         </div>
       </div>
 
-      {/* 選單 Sheet */}
-      <div className={`menu-wrap ${menuOpen ? 'open' : ''}`} role="dialog" aria-modal="true">
-        <div className="menu-backdrop" onClick={() => setMenuOpen(false)} />
-        <div className="menu-panel">
-          <div className="menu-in">
-            <div className="menu-title">
+      {/* 菜單面板 */}
+      <div className={`sheet ${menuOpen ? 'open' : ''}`} role="dialog" aria-modal="true">
+        <div className="mask" onClick={() => setMenuOpen(false)} />
+        <div className="panel">
+          <div className="panelin">
+            <div className="mtitle">
               <div style={{ display:'flex', alignItems:'center', gap:10 }}>
                 <div className="logo" /><strong>Ether</strong>
               </div>
-              <button className="icon-btn" onClick={() => setMenuOpen(false)} aria-label="close menu">
-                <div className="close-x" />
+              <button className="icon" onClick={() => setMenuOpen(false)} aria-label="close menu">
+                <div className="closex" />
               </button>
             </div>
-            <div className="menu-list">
+            <div className="mlist">
               {menuItems.map((i, idx) => (
-                <div className="menu-item" key={idx} onClick={() => handleMenuClick(i)}>
+                <div className="mitem" key={idx} onClick={() => handleMenuClick(i)}>
                   <span style={{ width:22, textAlign:'center' }}>{i.icon}</span>
-                  <span>{i.text}</span>
+                  <span style={{ fontWeight:700 }}>{i.text}</span>
                 </div>
               ))}
             </div>
-            <div className="menu-foot">安全可靠 · 功能完整 · Bitget / Trust 錢包相容</div>
+            <div className="mfoot">安全可靠 · 功能完整 · 相容 Bitget / Trust</div>
           </div>
         </div>
       </div>
 
       {/* Hero */}
       <div className="hero" ref={homeRef}>
-        <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1600&auto=format&fit=crop" alt="" />
+        <img
+          src="https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d?q=80&w=1600&auto=format&fit=crop"
+          alt="cover"
+        />
         <div className="shade" />
         <div className="hero-ct">
           <h1 className="h1">加入 Ether</h1>
+          <div className="cta">
+            <button className="btn btn-primary" onClick={() => (document.querySelector('#balances') as any)?.scrollIntoView({behavior:'smooth'})}>
+              已連接成功
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* 內容 */}
+      {/* Content */}
       <div className="wrap">
         <div className="grid">
           <div className="card">
             <h3>連線狀態</h3>
-            <div>狀態：{status}</div>
-            {error && <div style={{ color:'#fca5a5' }}>錯誤：{String(error.message ?? error)}</div>}
-            <div>地址：{address ?? '-'}</div>
-            <div>鏈 ID：{chainId ?? '-'}</div>
+            <div className="muted">狀態：<span style={{ color:'#EAF1F8' }}>{status}</span></div>
+            {error && <div style={{ color:'#fda4af', marginTop:6 }}>錯誤：{String(error.message ?? error)}</div>}
+            <div className="muted" style={{ marginTop:6 }}>地址：<span style={{ color:'#EAF1F8' }}>{address ?? '-'}</span></div>
+            <div className="muted" style={{ marginTop:6 }}>鏈 ID：<span style={{ color:'#EAF1F8' }}>{chainId ?? '-'}</span></div>
           </div>
-          <div className="card">
+
+          <div className="card" id="balances">
             <h3>餘額</h3>
-            <div>原生幣：{nativeBal ? `${nativeBal.formatted} ${nativeBal.symbol}` : '-'}</div>
-            <div>USDC：{usdc}</div>
-            <button className="btn primary" style={{ marginTop:10 }} onClick={fetchUsdc}>重新讀取 USDC</button>
+            <div className="muted">原生幣：<span style={{ color:'#EAF1F8' }}>{nativeBal ? `${nativeBal.formatted} ${nativeBal.symbol}` : '-'}</span></div>
+            <div className="muted" style={{ marginTop:6 }}>USDC：<span style={{ color:'#EAF1F8' }}>{usdc}</span></div>
+            <button className="btn btn-primary" style={{ marginTop:12 }} onClick={fetchUsdc}>重新讀取 USDC</button>
           </div>
         </div>
 
-        {/* 合作夥伴跑馬燈 */}
+        {/* 合作夥伴 */}
         <div className="partners" ref={rewardsRef}>
-          <h3>合作夥伴</h3>
+          <div className="muted" style={{ margin:'0 4px 8px' }}>合作夥伴</div>
           <div className="marquee">
             <div className="track">
               {partnerLogos.concat(partnerLogos).map((p, i) => (
@@ -268,13 +261,14 @@ export default function App() {
           </div>
         </div>
 
-        {/* 假的收益記錄區塊（示範內部錨點） */}
-        <div className="card" style={{ marginTop:24 }} ref={historyRef}>
+        {/* 收益記錄（示範錨點） */}
+        <div className="card" style={{ marginTop:26 }} ref={historyRef}>
           <h3>收益記錄</h3>
-          <div style={{ opacity:.85 }}>（這裡先放佔位內容，你之後可以換成真的表格或列表）</div>
+          <div className="muted">（示意：之後可換成表格或列表）</div>
         </div>
 
-        <div className="card" style={{ marginTop:24 }}>
+        {/* 切鏈 */}
+        <div className="card" style={{ marginTop:26 }}>
           <h3>切換鏈</h3>
           <div style={{ display:'flex', flexWrap:'wrap', gap:10 }}>
             {supportedChains.map(c => (
@@ -302,9 +296,7 @@ export default function App() {
           </div>
         </div>
 
-        <footer style={{ marginTop:24, textAlign:'center', opacity:.7 }}>
-          © {new Date().getFullYear()} 攀越點
-        </footer>
+        <footer>© {new Date().getFullYear()} 悟淨・DeFi DApp</footer>
       </div>
     </div>
   )
