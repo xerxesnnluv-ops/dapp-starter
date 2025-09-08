@@ -1,76 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useAccount, useConnect, useDisconnect, useBalance, useChainId } from 'wagmi'
 import { readContract } from 'wagmi/actions'
 import { formatUnits } from 'viem'
 import { erc20Abi } from './abi/erc20'
 import { wagmiConfig, supportedChains } from './web3'
 
-/** 換成你的主視覺圖（1080x600 以上，構圖靠中央更穩） */
-const HERO_URL =
-  'https://images.unsplash.com/photo-1549880338-65ddcdfd017b?q=80&w=1600&auto=format&fit=crop'
-
-/** 內建 CSS：避免 index.css / 快取沒更新 */
-function injectStyles() {
-  const ID = 'impermax-like-style'
-  if (document.getElementById(ID)) return
-  const css = `
-:root{
-  --bg:#0b0f1a;--text:#e5e7eb;--muted:#9ca3af;
-  --line:#1f2937;--card:#0f172a;--card-2:#111827;
-  --accent:#14b8a6;/* 青綠主色 */--accent-2:#0ea5e9;--danger:#ef4444;--brand-grad:linear-gradient(135deg,#22d3ee,#6366f1);
-  --r:14px;--rs:10px
-}
-*{box-sizing:border-box} html,body,#root{height:100%}
-body{margin:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"PingFang TC","Microsoft JhengHei"}
-/* Header */
-.topbar{position:sticky;top:0;z-index:50;background:#0b0f1acc;backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
-.topbar-inner{display:flex;align-items:center;justify-content:space-between;padding:12px 16px}
-.brand{display:flex;align-items:center;gap:10px}
-.logo{width:28px;height:28px;background:var(--brand-grad);border-radius:8px}
-.btitle{font-weight:800}
-.hamb{width:38px;height:34px;border:1px solid var(--line);border-radius:10px;display:grid;place-items:center}
-.hamb span{width:16px;height:2px;background:#94a3b8;display:block;box-shadow:0 5px 0 #94a3b8,0 -5px 0 #94a3b8}
-/* Subnav */
-.subnav{background:var(--accent);color:#071b1b}
-.subnav-inner{display:flex;align-items:center;gap:8px;padding:10px 16px;font-weight:600}
-/* Hero */
-.hero{position:relative;isolation:isolate}
-.hero img{width:100%;height:46vh;object-fit:cover;display:block}
-@media(min-width:860px){ .hero img{height:56vh} }
-.hero .shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.25),rgba(0,0,0,.65))}
-.hero .content{position:absolute;left:16px;right:16px;bottom:20px}
-.h1{font-size:38px;font-weight:900;letter-spacing:.02em;margin:0 0 6px}
-.p{margin:0 0 14px;color:var(--text);opacity:.9}
-.cta-row{display:flex;gap:10px;flex-wrap:wrap}
-.btn{padding:12px 16px;border:none;border-radius:12px;cursor:pointer;font-weight:700}
-.btn.primary{background:var(--accent);color:#062a29}
-.btn.ghost{background:transparent;color:#e5e7eb;border:1px solid #ffffff33}
-/* Partners */
-.wrap{max-width:1024px;margin:0 auto;padding:18px 16px}
-.partners{background:#0e1524;border:1px solid var(--line);border-radius:var(--r);padding:12px}
-.scroller{display:flex;gap:12px;overflow:auto;padding:4px}
-.logo-pill{min-width:56px;height:56px;border-radius:999px;background:var(--card-2);border:1px solid var(--line);display:grid;place-items:center;font-weight:800}
-.note{color:var(--muted);font-size:12px;text-align:center;margin-top:8px}
-/* Cards */
-.grid{display:grid;gap:16px;margin-top:16px}
-@media(min-width:860px){ .grid{grid-template-columns:1fr 1fr} }
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
-.card h3{margin:0 0 10px}
-.kv{line-height:1.7}
-.kv .muted{color:var(--muted)}
-.badge{padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--card-2);color:var(--muted);font-size:12px}
-.btn-xs{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card-2);color:var(--text);cursor:pointer}
-.btn-accent{background:var(--accent);border:none;color:#052321}
-.switch-chip{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card-2);cursor:pointer}
-footer{color:var(--muted);text-align:center;padding:20px}
-`.trim()
-  const s = document.createElement('style')
-  s.id = ID
-  s.textContent = css
-  document.head.appendChild(s)
-}
-
-/** 工具 */
 const USDC: Record<number, `0x${string}`> = {
   1: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
   137: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
@@ -79,17 +13,25 @@ const USDC: Record<number, `0x${string}`> = {
   42161: '0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8',
   10: '0x7F5c764cBc14f9669B88837ca1490cCa17c31607',
 }
-const short = (a?: `0x${string}` | string) => (a ? `${a.slice(0, 6)}…${a.slice(-4)}` : '-')
+
+const partners = [
+  { name: 'Ethereum', logo: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png' },
+  { name: 'BNB Chain', logo: 'https://assets.coingecko.com/coins/images/825/small/binance-coin-logo.png' },
+  { name: 'Polygon', logo: 'https://assets.coingecko.com/coins/images/4713/small/matic-token-icon.png' },
+  { name: 'Arbitrum', logo: 'https://assets.coingecko.com/coins/images/16547/small/arbitrum.png' },
+  { name: 'Optimism', logo: 'https://assets.coingecko.com/coins/images/25244/small/Optimism.png' },
+  { name: 'Base', logo: 'https://assets.coingecko.com/coins/images/27739/small/base-logo.png' },
+  { name: 'zkSync', logo: 'https://assets.coingecko.com/coins/images/30354/small/zksync.jpg' },
+  { name: 'Avalanche', logo: 'https://assets.coingecko.com/coins/images/12559/small/Avalanche_Circle_RedWhite.png' },
+  { name: 'Fantom', logo: 'https://assets.coingecko.com/coins/images/4001/small/Fantom.png' },
+]
 
 export default function App() {
-  useEffect(() => { injectStyles() }, [])
-
   const { connectors, connect, status, error } = useConnect()
   const { isConnected, address } = useAccount()
   const chainId = useChainId()
   const { disconnect } = useDisconnect()
   const { data: nativeBal } = useBalance({ address, chainId })
-
   const [usdc, setUsdc] = useState<string>('-')
   const currentUsdc = useMemo(() => USDC[chainId ?? 1], [chainId])
 
@@ -101,114 +43,149 @@ export default function App() {
         readContract(wagmiConfig, { address: currentUsdc, abi: erc20Abi, functionName: 'decimals' }),
       ])
       setUsdc(formatUnits(raw as bigint, Number(decimals)))
-    } catch { setUsdc('讀取失敗') }
-  }
-
-  async function switchTo(c: (typeof supportedChains)[number]) {
-    const p = (window as any).ethereum
-    if (!p?.request) return alert('未偵測到以太坊提供者')
-    try { await p.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: `0x${c.id.toString(16)}` }] }) }
-    catch (e: any) {
-      if (e?.code === 4902) {
-        await p.request({ method: 'wallet_addEthereumChain', params: [{ chainId: `0x${c.id.toString(16)}`, chainName: c.name, nativeCurrency: c.nativeCurrency, rpcUrls: c.rpcUrls.default.http }] })
-      }
+    } catch {
+      setUsdc('讀取失敗')
     }
   }
 
   return (
-    <>
-      {/* 頂欄 */}
-      <div className="topbar">
-        <div className="topbar-inner">
-          <div className="brand">
-            <div className="logo" />
-            <div className="btitle">攀越點Dapp</div>
-          </div>
-          <div className="hamb"><span /></div>
+    <div style={{ minHeight: '100vh', background: '#0B0F1A', color: 'white', fontFamily: 'ui-sans-serif' }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid #1f2937' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 28, height: 28, background: 'linear-gradient(135deg,#22d3ee,#6366f1)', borderRadius: 8 }} />
+          <strong>悟淨 · DeFi DApp</strong>
+          {chainId && (
+            <span style={{ fontSize: 12, marginLeft: 8, padding: '2px 6px', borderRadius: 6, background: '#1f2937' }}>
+              Chain ID : {chainId}
+            </span>
+          )}
         </div>
-        <div className="subnav">
-          <div className="subnav-inner">🔊 收益獎勵利率</div>
-        </div>
-      </div>
-
-      {/* Hero 區 */}
-      <section className="hero">
-        <img src={HERO_URL} alt="hero" />
-        <div className="shade" />
-        <div className="content">
-          <h1 className="h1">加入 攀越點</h1>
-          <p className="p">功能強大、安全可靠</p>
-          <div className="cta-row">
-            {!isConnected ? (
-              <>
-                <select
-                  style={{ padding: 12, borderRadius: 12, background: '#0f172a', color: '#e5e7eb', border: '1px solid #1f2937' }}
-                  defaultValue=""
-                  onChange={e => {
-                    const ct = connectors.find(x => x.uid === e.target.value)
-                    if (ct) connect({ connector: ct })
-                  }}
+        <div>
+          {!isConnected ? (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {connectors.map(c => (
+                <button
+                  key={c.uid}
+                  onClick={() => connect({ connector: c })}
+                  style={{ padding: '10px 14px', background: '#111827', border: '1px solid #374151', borderRadius: 10, cursor: 'pointer' }}
                 >
-                  <option value="" disabled>選擇連線方式</option>
-                  {connectors.map(c => <option key={c.uid} value={c.uid}>🔗 {c.name}</option>)}
-                </select>
-                <button className="btn primary">連接錢包</button>
-              </>
-            ) : (
-              <>
-                <button className="btn primary">已連接成功</button>
-                <button className="btn ghost" onClick={() => disconnect()}>斷開連線</button>
-              </>
-            )}
+                  連線：{c.name}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <button
+              onClick={() => disconnect()}
+              style={{ padding: '10px 14px', background: '#111827', border: '1px solid #374151', borderRadius: 10, cursor: 'pointer' }}
+            >
+              斷開連線
+            </button>
+          )}
+        </div>
+      </header>
+
+      <main style={{ maxWidth: 960, margin: '0 auto', padding: '40px 20px' }}>
+        <h1 style={{ fontSize: 28, marginBottom: 12 }}>Bitget / Trust 相容 · 正式版介面</h1>
+        <p style={{ opacity: 0.85, marginBottom: 24 }}>支援 Injected（錢包內建瀏覽器）與 WalletConnect v2。</p>
+
+        <section style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+          <div style={{ background: '#0f172a', border: '1px solid #1f2937', borderRadius: 14, padding: 18 }}>
+            <h2 style={{ fontSize: 18, marginBottom: 10 }}>連線狀態</h2>
+            <div style={{ fontSize: 14, opacity: 0.9 }}>
+              <div>狀態：{status}</div>
+              {error && <div style={{ color: '#fca5a5' }}>錯誤：{String(error.message ?? error)}</div>}
+              <div>地址：{address ?? '-'}</div>
+              <div>鏈 ID：{chainId ?? '-'}</div>
+            </div>
           </div>
-        </div>
-      </section>
 
-      {/* 合作夥伴 */}
-      <div className="wrap">
-        <div className="partners">
-          <div className="scroller">
-            {['ETH','BSC','POLY','ARB','OP','BASE','ZKS','IMX','AVA','FTM'].map(t => (
-              <div className="logo-pill" key={t}>{t}</div>
-            ))}
+          <div style={{ background: '#0f172a', border: '1px solid #1f2937', borderRadius: 14, padding: 18 }}>
+            <h2 style={{ fontSize: 18, marginBottom: 10 }}>餘額</h2>
+            <div style={{ fontSize: 14, opacity: 0.9 }}>
+              <div>原生幣：{nativeBal ? `${nativeBal.formatted} ${nativeBal.symbol}` : '-'}</div>
+              <div>USDC（當前鏈）：{usdc}</div>
+              <button
+                onClick={fetchUsdc}
+                style={{ marginTop: 10, padding: '8px 12px', background: '#2563eb', border: 'none', borderRadius: 8, cursor: 'pointer', color: 'white' }}
+              >
+                重新讀取 USDC
+              </button>
+            </div>
           </div>
-          <div className="note">合作夥伴（測試中，可放品牌 Logo）</div>
-        </div>
+        </section>
 
-        {/* 功能卡片 */}
-        <div className="grid">
-          <section className="card">
-            <h3>連線資訊 <span className="badge">Chain ID: {chainId ?? '-'}</span></h3>
-            <div className="kv">
-              <div>狀態：<span className="muted">{status}</span></div>
-              {error && <div style={{ color: '#ef4444' }}>錯誤：{String(error.message ?? error)}</div>}
-              <div>地址：<span className="muted">{short(address)}</span></div>
-            </div>
-          </section>
-
-          <section className="card">
-            <h3>餘額</h3>
-            <div className="kv">
-              <div>原生幣：<span className="muted">{nativeBal ? `${nativeBal.formatted} ${nativeBal.symbol}` : '-'}</span></div>
-              <div>USDC：<span className="muted">{usdc}</span></div>
-            </div>
-            <div style={{ marginTop: 10 }}>
-              <button className="btn-xs btn-accent" onClick={fetchUsdc}>重新讀取 USDC</button>
-            </div>
-          </section>
-        </div>
-
-        <section className="card" style={{ marginTop: 16 }}>
-          <h3>切換鏈</h3>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+        <section style={{ marginTop: 24, background: '#0f172a', border: '1px solid #1f2937', borderRadius: 14, padding: 18 }}>
+          <h2 style={{ fontSize: 18, marginBottom: 10 }}>切換鏈</h2>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {supportedChains.map(c => (
-              <button key={c.id} className="switch-chip" onClick={() => switchTo(c)}>{c.name}</button>
+              <button
+                key={c.id}
+                onClick={async () => {
+                  const provider = (window as any).ethereum
+                  if (!provider?.request) return alert('未偵測到以太坊提供者')
+                  try {
+                    await provider.request({
+                      method: 'wallet_switchEthereumChain',
+                      params: [{ chainId: `0x${c.id.toString(16)}` }],
+                    })
+                  } catch (e: any) {
+                    if (e?.code === 4902) {
+                      await provider.request({
+                        method: 'wallet_addEthereumChain',
+                        params: [
+                          {
+                            chainId: `0x${c.id.toString(16)}`,
+                            chainName: c.name,
+                            nativeCurrency: c.nativeCurrency,
+                            rpcUrls: c.rpcUrls.default.http,
+                          },
+                        ],
+                      })
+                    }
+                  }
+                }}
+                style={{ padding: '8px 12px', background: '#111827', border: '1px solid #374151', borderRadius: 8, cursor: 'pointer', color: 'white' }}
+              >
+                {c.name}
+              </button>
             ))}
           </div>
         </section>
-      </div>
 
-      <footer>© {new Date().getFullYear()} 攀越點</footer>
-    </>
+        {/* 跑馬燈合作夥伴區 */}
+        <section style={{ marginTop: 40 }}>
+          <h2 style={{ fontSize: 18, marginBottom: 14 }}>合作夥伴</h2>
+          <div style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}>
+            <div
+              style={{
+                display: 'inline-flex',
+                gap: 30,
+                animation: 'scroll 25s linear infinite',
+              }}
+            >
+              {partners.map((p, i) => (
+                <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <img src={p.logo} alt={p.name} style={{ width: 40, height: 40, borderRadius: '50%' }} />
+                  <span style={{ fontSize: 12, marginTop: 6 }}>{p.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer style={{ textAlign: 'center', padding: 20, fontSize: 12, opacity: 0.7 }}>
+        © 2025 攀越點
+      </footer>
+
+      <style>
+        {`
+          @keyframes scroll {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+          }
+        `}
+      </style>
+    </div>
   )
 }
