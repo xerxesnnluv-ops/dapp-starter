@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef } from 'react'
+import { useMemo, useState } from 'react'
 import { useAccount, useConnect, useDisconnect, useBalance, useChainId } from 'wagmi'
 import { readContract } from 'wagmi/actions'
 import { formatUnits } from 'viem'
@@ -6,21 +6,18 @@ import { erc20Abi } from './abi/erc20'
 import { wagmiConfig, supportedChains } from './web3'
 
 /** ---------------------------
- *  基本設定
+ *  連結與常數
  *  --------------------------*/
-
-// 可替換為你自己的文件網址
 const LINKS = {
   homepage: '/',
   account: '#',
   rewards: '#',
   history: '#',
-  whitepaper: 'https://example.com/whitepaper', // ← 換成你的白皮書連結
-  help: 'https://example.com/help',             // ← 換成你的幫助中心
-  language: '#',                                // ← 語言選擇頁
+  whitepaper: 'https://example.com/whitepaper', // 換成你的白皮書
+  help: 'https://example.com/help',             // 換成你的幫助中心
+  language: '#',
 }
 
-// USDC 合約地址（常見鏈）
 const USDC: Record<number, `0x${string}`> = {
   1: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
   137: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
@@ -30,7 +27,6 @@ const USDC: Record<number, `0x${string}`> = {
   10: '0x7F5c764cBc14f9669B88837ca1490cCa17c31607',
 }
 
-// 合作夥伴（使用公有圖標，不用下載）
 const PARTNERS = [
   { name: 'Ethereum',  url: 'https://cryptologos.cc/logos/ethereum-eth-logo.svg' },
   { name: 'BNB Chain', url: 'https://cryptologos.cc/logos/bnb-bnb-logo.svg' },
@@ -43,39 +39,22 @@ const PARTNERS = [
 ] as const
 
 export default function App() {
-  /** web3 狀態 */
+  // web3 狀態
   const { connectors, connect, status, error } = useConnect()
   const { isConnected, address } = useAccount()
   const chainId = useChainId()
   const { disconnect } = useDisconnect()
   const { data: nativeBal } = useBalance({ address, chainId })
   const [usdc, setUsdc] = useState<string>('-')
+  const [menuOpen, setMenuOpen] = useState(false)
   const currentUsdc = useMemo(() => USDC[chainId ?? 1], [chainId])
 
-  /** 版面與選單狀態 */
-  const [menuOpen, setMenuOpen] = useState(false)
-
-  /** Refs（宣告為可為 null，但用 callback ref 指派，避免 TS2322） */
-  const homeRef = useRef<HTMLDivElement | null>(null)
-  const rewardsRef = useRef<HTMLDivElement | null>(null)
-  const historyRef = useRef<HTMLDivElement | null>(null)
-
-  /** 讀取 USDC 餘額 */
   async function fetchUsdc() {
     if (!address || !currentUsdc) return setUsdc('-')
     try {
       const [raw, decimals] = await Promise.all([
-        readContract(wagmiConfig, {
-          address: currentUsdc,
-          abi: erc20Abi,
-          functionName: 'balanceOf',
-          args: [address],
-        }),
-        readContract(wagmiConfig, {
-          address: currentUsdc,
-          abi: erc20Abi,
-          functionName: 'decimals',
-        }),
+        readContract(wagmiConfig, { address: currentUsdc, abi: erc20Abi, functionName: 'balanceOf', args: [address] }),
+        readContract(wagmiConfig, { address: currentUsdc, abi: erc20Abi, functionName: 'decimals' }),
       ])
       setUsdc(formatUnits(raw as bigint, Number(decimals)))
     } catch {
@@ -83,27 +62,16 @@ export default function App() {
     }
   }
 
-  /** 切鏈 */
   async function switchChain(id: number, name: string, nativeCurrency: any, rpcUrls: string[]) {
     const provider = (window as any).ethereum
     if (!provider?.request) return alert('未偵測到以太坊提供者')
     try {
-      await provider.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: `0x${id.toString(16)}` }],
-      })
+      await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: `0x${id.toString(16)}` }] })
     } catch (e: any) {
       if (e?.code === 4902) {
         await provider.request({
           method: 'wallet_addEthereumChain',
-          params: [
-            {
-              chainId: `0x${id.toString(16)}`,
-              chainName: name,
-              nativeCurrency,
-              rpcUrls,
-            },
-          ],
+          params: [{ chainId: `0x${id.toString(16)}`, chainName: name, nativeCurrency, rpcUrls }],
         })
       }
     }
@@ -111,11 +79,9 @@ export default function App() {
 
   return (
     <div className="page">
-      {/* 內嵌樣式（單檔即可跑） */}
       <style>{`
-        :root { --bg:#0B0F1A; --card:#0f172a; --line:#1f2937; --muted:#9CA3AF; --brand:#60A5FA; --btn:#111827; --btnline:#374151; }
-        *{box-sizing:border-box}
-        body,html,#root{height:100%}
+        :root { --bg:#0B0F1A; --card:#0f172a; --line:#1f2937; --muted:#9CA3AF; --btn:#111827; --btnline:#374151; }
+        *{box-sizing:border-box} body,html,#root{height:100%}
         .page{min-height:100vh;background:var(--bg);color:#fff;font-family:ui-sans-serif,system-ui,'PingFang TC',Noto Sans TC,Segoe UI,Roboto}
         .container{max-width:1000px;margin:0 auto;padding:20px}
         header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--bg);z-index:50}
@@ -123,12 +89,9 @@ export default function App() {
         .logo-badge{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#22d3ee,#6366f1)}
         .hstack{display:flex;gap:10px;flex-wrap:wrap}
         .btn{padding:10px 14px;background:var(--btn);border:1px solid var(--btnline);border-radius:10px;color:#fff;cursor:pointer}
-        .btn.primary{background:#2563EB;border-color:#2563EB}
         .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
         .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-        h1{font-size:32px;margin:24px 0 8px}
-        h2{font-size:18px;margin:0 0 10px}
-        .muted{color:var(--muted)}
+        h1{font-size:32px;margin:24px 0 8px} h2{font-size:18px;margin:0 0 10px} .muted{color:var(--muted)}
         .drawer-mask{position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:saturate(1.2) blur(2px);opacity:0;pointer-events:none;transition:.2s}
         .drawer-mask.show{opacity:1;pointer-events:auto}
         .drawer{position:fixed;right:0;top:0;height:100%;width:78%;max-width:360px;background:#0e1422;border-left:1px solid var(--line);transform:translateX(100%);transition:.22s}
@@ -138,7 +101,7 @@ export default function App() {
         .menu-list a:hover{background:rgba(255,255,255,.03)}
         .hero{margin:14px 0 28px;padding:18px;border:1px dashed #1e293b;border-radius:14px;background:linear-gradient(180deg,rgba(96,165,250,.08),rgba(0,0,0,0))}
         .partners{position:relative;overflow:hidden;border-radius:12px;border:1px solid var(--line);margin-top:14px}
-        .marquee{display:flex;gap:28px;align-items:center;white-space:nowrap;will-change:transform;animation:scroll 18s linear infinite} /* 稍快 */
+        .marquee{display:flex;gap:28px;align-items:center;white-space:nowrap;will-change:transform;animation:scroll 18s linear infinite}
         .marquee img{height:28px;width:auto;filter:saturate(120%)}
         @keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
         footer{padding:24px 0 60px;text-align:center;color:#94a3b8;border-top:1px solid var(--line);margin-top:28px}
@@ -151,12 +114,12 @@ export default function App() {
           <div className="logo-badge" />
           <strong>悟淨・DeFi DApp</strong>
         </div>
-
-        {/* 右上角：連線/選單 */}
         <div className="hstack">
           {!isConnected ? (
             connectors.map(c => (
-              <button key={c.uid} className="btn" onClick={() => connect({ connector: c })}>連線：{c.name}</button>
+              <button key={c.uid} className="btn" onClick={() => connect({ connector: c })}>
+                連線：{c.name}
+              </button>
             ))
           ) : (
             <>
@@ -192,12 +155,8 @@ export default function App() {
           <p className="muted">支援 Injected（錢包內建瀏覽器）與 WalletConnect v2。介面採卡片式設計，清晰易讀。</p>
         </section>
 
-        {/* 連線資訊 + 餘額 */}
         <section className="grid2">
-          <div
-            ref={(el) => { homeRef.current = el }}
-            className="card"
-          >
+          <div className="card">
             <h2>連線狀態</h2>
             <div className="muted">
               <div>狀態：{status}</div>
@@ -207,10 +166,7 @@ export default function App() {
             </div>
           </div>
 
-          <div
-            ref={(el) => { rewardsRef.current = el }}
-            className="card"
-          >
+          <div className="card">
             <h2>餘額</h2>
             <div className="muted">
               <div>原生幣：{nativeBal ? `${nativeBal.formatted} ${nativeBal.symbol}` : '-'}</div>
@@ -220,12 +176,7 @@ export default function App() {
           </div>
         </section>
 
-        {/* 切換鏈 */}
-        <section
-          ref={(el) => { historyRef.current = el }}
-          className="card"
-          style={{ marginTop: 18 }}
-        >
+        <section className="card" style={{ marginTop: 18 }}>
           <h2>切換鏈</h2>
           <div className="hstack">
             {supportedChains.map(c => (
@@ -240,7 +191,6 @@ export default function App() {
           </div>
         </section>
 
-        {/* 合作夥伴（跑馬燈） */}
         <section className="partners">
           <div className="marquee">
             {[...PARTNERS, ...PARTNERS].map((p, i) => (
