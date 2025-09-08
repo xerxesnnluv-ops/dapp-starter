@@ -1,19 +1,11 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react'
+import { useMemo, useRef, useState, useEffect } from 'react'
 import { useAccount, useConnect, useDisconnect, useBalance, useChainId } from 'wagmi'
 import { readContract } from 'wagmi/actions'
 import { formatUnits } from 'viem'
 import { erc20Abi } from './abi/erc20'
 import { wagmiConfig, supportedChains } from './web3'
 
-// ===== 外部連結（可換成你的正式網址）=====
-const LINKS = {
-  whitepaper: 'https://example.com/whitepaper.pdf',
-  help: 'https://example.com/help',
-  rewards: 'https://example.com/rewards',
-  language: 'https://example.com/language',
-}
-
-// ===== USDC 地址 =====
+// ===== USDC 地址（多鏈）=====
 const USDC: Record<number, `0x${string}`> = {
   1: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
   137: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
@@ -22,6 +14,24 @@ const USDC: Record<number, `0x${string}`> = {
   42161: '0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8',
   10: '0x7F5c764cBc14f9669B88837ca1490cCa17c31607',
 }
+
+// ===== 外部資源（可改成你的連結）=====
+const LINKS = {
+  whitepaper: 'https://example.com/whitepaper.pdf',
+  help: 'https://example.com/help',
+  rewards: 'https://example.com/rewards',
+  language: 'https://example.com/language',
+}
+
+// ===== 線上 logo（免下載）=====
+const partnerLogos = [
+  { name: 'Ethereum',  logo: 'https://cryptologos.cc/logos/ethereum-eth-logo.png' },
+  { name: 'Binance',   logo: 'https://cryptologos.cc/logos/binance-coin-bnb-logo.png' },
+  { name: 'Polygon',   logo: 'https://cryptologos.cc/logos/polygon-matic-logo.png' },
+  { name: 'Arbitrum',  logo: 'https://cryptologos.cc/logos/arbitrum-arb-logo.png' },
+  { name: 'Optimism',  logo: 'https://cryptologos.cc/logos/optimism-ethereum-op-logo.png' },
+  { name: 'Base',      logo: 'https://cryptologos.cc/logos/base-2-logo.png' },
+];
 
 export default function App() {
   const { connectors, connect, status, error } = useConnect()
@@ -33,25 +43,12 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const currentUsdc = useMemo(() => USDC[chainId ?? 1], [chainId])
 
-  // ===== 三個錨點（允許為 null，避免 TS 報錯）=====
+  // 安全錨點（允許為 null，避免 TS2322）
   const homeRef = useRef<HTMLDivElement | null>(null)
   const rewardsRef = useRef<HTMLDivElement | null>(null)
   const historyRef = useRef<HTMLDivElement | null>(null)
 
-  async function fetchUsdc() {
-    if (!address || !currentUsdc) return setUsdc('-')
-    try {
-      const [raw, decimals] = await Promise.all([
-        readContract(wagmiConfig, { address: currentUsdc, abi: erc20Abi, functionName: 'balanceOf', args: [address] }),
-        readContract(wagmiConfig, { address: currentUsdc, abi: erc20Abi, functionName: 'decimals' }),
-      ])
-      setUsdc(formatUnits(raw as bigint, Number(decimals)))
-    } catch {
-      setUsdc('讀取失敗')
-    }
-  }
-
-  // ===== 全域樣式（專業簡潔、Impermax 風格）=====
+  // 全域樣式（專業＋簡潔）
   useEffect(() => {
     const s = document.createElement('style')
     s.textContent = `
@@ -62,7 +59,7 @@ export default function App() {
       }
       *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);
         font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans TC","PingFang TC",Arial}
-      a{color:inherit}
+      a{color:inherit;text-decoration:none}
 
       /* Topbar */
       .top{position:sticky;top:0;z-index:50;background:rgba(10,14,20,.7);
@@ -70,7 +67,7 @@ export default function App() {
       .topin{max-width:1080px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:12px 16px}
       .brand{display:flex;align-items:center;gap:10px}
       .logo{width:28px;height:28px;border-radius:9px;background:linear-gradient(135deg,var(--brand),var(--brand2))}
-      .right{display:flex;align-items:center;gap:10px}
+      .right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
       .btn{padding:10px 14px;border-radius:12px;border:1px solid #223140;background:#0A1220;color:var(--text);cursor:pointer}
       .btn-ghost{border:1px solid #243446}
       .btn-primary{border:none;background:linear-gradient(135deg,var(--brand),var(--brand2));color:#041018;font-weight:800}
@@ -110,10 +107,10 @@ export default function App() {
       .card h3{margin:0 0 12px;font-size:18px}
       .muted{color:var(--muted)}
 
-      /* Partners marquee（加速） */
+      /* Partners marquee（較快速度） */
       .partners{margin-top:26px;border-radius:var(--r-lg);border:1px solid var(--line);background:#0B1219;padding:10px}
       .marquee{overflow:hidden}
-      .track{display:flex;gap:18px;align-items:center;width:max-content;animation:scroll 10s linear infinite}
+      .track{display:flex;gap:18px;align-items:center;width:max-content;animation:scroll 9s linear infinite}
       .pill{min-width:118px;height:48px;padding:8px 12px;border:1px solid #233144;background:rgba(255,255,255,.03);
         border-radius:999px;display:flex;align-items:center;gap:10px}
       .pill img{width:26px;height:26px;object-fit:contain}
@@ -126,43 +123,43 @@ export default function App() {
     return () => { s.remove() }
   }, [])
 
-  // ===== 外部 logo（免下載）=====
-  const partnerLogos = [
-    { name:'Ethereum', logo:'https://cryptologos.cc/logos/ethereum-eth-logo.png' },
-    { name:'Binance',  logo:'https://cryptologos.cc/logos/binance-coin-bnb-logo.png' },
-    { name:'Polygon',  logo:'https://cryptologos.cc/logos/polygon-matic-logo.png' },
-    { name:'Arbitrum', logo:'https://cryptologos.cc/logos/arbitrum-arb-logo.png' },
-    { name:'Optimism', logo:'https://cryptologos.cc/logos/optimism-ethereum-op-logo.png' },
-    { name:'Base',     logo:'https://cryptologos.cc/logos/base-2-logo.png' },
-  ]
+  async function fetchUsdc() {
+    if (!address || !currentUsdc) return setUsdc('-')
+    try {
+      const [raw, decimals] = await Promise.all([
+        readContract(wagmiConfig, { address: currentUsdc, abi: erc20Abi, functionName: 'balanceOf', args: [address] }),
+        readContract(wagmiConfig, { address: currentUsdc, abi: erc20Abi, functionName: 'decimals' }),
+      ])
+      setUsdc(formatUnits(raw as bigint, Number(decimals)))
+    } catch {
+      setUsdc('讀取失敗')
+    }
+  }
 
-  // ===== 右上角選單 =====
+  // 選單項目
   const menuItems: Array<
-    { icon: string; text: string; type: 'anchor' | 'external'; target?: string; refKey?: 'home' | 'rewards' | 'history' }
+    { label: string; type: 'anchor' | 'external'; refKey?: 'home' | 'rewards' | 'history'; target?: string }
   > = [
-    { icon:'🏠', text:'首頁', type:'anchor',  refKey:'home' },
-    { icon:'👛', text:'帳號', type:'anchor', refKey:'home' },
-    { icon:'🎁', text:'獎勵', type:'external', target: LINKS.rewards },
-    { icon:'⏱️', text:'收益記錄', type:'anchor', refKey:'history' },
-    { icon:'📄', text:'白皮書', type:'external', target: LINKS.whitepaper },
-    { icon:'❓', text:'幫助中心', type:'external', target: LINKS.help },
-    { icon:'🌐', text:'選擇語言', type:'external', target: LINKS.language },
+    { label: '首頁', type: 'anchor', refKey: 'home' },
+    { label: '獎勵', type: 'external', target: LINKS.rewards },
+    { label: '收益記錄', type: 'anchor', refKey: 'history' },
+    { label: '白皮書', type: 'external', target: LINKS.whitepaper },
+    { label: '幫助中心', type: 'external', target: LINKS.help },
+    { label: '選擇語言', type: 'external', target: LINKS.language },
   ]
 
-  // ===== 修好型別：用「元素本體或 null」做映射（不是 RefObject）=====
+  // 安全捲動（不做物件映射，TS 安心）
   function handleMenuClick(item: (typeof menuItems)[number]) {
     try {
       if (item.type === 'external' && item.target) {
-        window.open(item.target, '_blank')
-        return
+        window.open(item.target, '_blank'); return
       }
       if (item.type === 'anchor' && item.refKey) {
-        const map: Record<'home' | 'rewards' | 'history', HTMLDivElement | null> = {
-          home: homeRef.current,
-          rewards: rewardsRef.current,
-          history: historyRef.current,
-        }
-        map[item.refKey]?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        let el: HTMLDivElement | null = null
+        if (item.refKey === 'home') el = homeRef.current
+        else if (item.refKey === 'rewards') el = rewardsRef.current
+        else if (item.refKey === 'history') el = historyRef.current
+        el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
     } finally {
       setMenuOpen(false)
@@ -177,18 +174,17 @@ export default function App() {
           <div className="brand">
             <div className="logo" />
             <strong>悟淨・DeFi DApp</strong>
+            <span style={{ fontSize: 12, opacity: 0.6 }}>Chain ID：{chainId ?? '-'}</span>
           </div>
           <div className="right">
             {isConnected ? (
               <button className="btn btn-ghost" onClick={() => disconnect()}>斷開連線</button>
             ) : (
-              <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-                {connectors.map(c => (
-                  <button key={c.uid} className="btn btn-ghost" onClick={() => connect({ connector:c })}>
-                    連線：{c.name}
-                  </button>
-                ))}
-              </div>
+              connectors.map(c => (
+                <button key={c.uid} className="btn btn-ghost" onClick={() => connect({ connector: c })}>
+                  連線：{c.name}
+                </button>
+              ))
             )}
             <button className="icon" onClick={() => setMenuOpen(true)} aria-label="open menu">
               <div className="hb" aria-hidden><span></span><span></span><span></span></div>
@@ -213,8 +209,8 @@ export default function App() {
             <div className="mlist">
               {menuItems.map((i, idx) => (
                 <div className="mitem" key={idx} onClick={() => handleMenuClick(i)}>
-                  <span style={{ width:22, textAlign:'center' }}>{i.icon}</span>
-                  <span style={{ fontWeight:700 }}>{i.text}</span>
+                  <span style={{ width:22, textAlign:'center' }}>•</span>
+                  <span style={{ fontWeight:700 }}>{i.label}</span>
                 </div>
               ))}
             </div>
